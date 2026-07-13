@@ -3,17 +3,10 @@ import { getDb } from "../../../db";
 import { requireCurrentLearner } from "../../../lib/auth/current-learner";
 import { validateLearningCommand } from "../../../lib/api/learning-commands.ts";
 import { examPapers, learningReflections, problemAttempts, problems, studySessions } from "../../../db/schema";
+import { handledApiError } from "../../../lib/api/errors";
 
 function clamp(value: unknown, min: number, max: number, fallback: number) {
   return typeof value === "number" && Number.isFinite(value) ? Math.min(max, Math.max(min, Math.round(value))) : fallback;
-}
-
-function databaseError(error: unknown) {
-  const message = error instanceof Error ? error.message : "Không thể lưu hoạt động học tập";
-  if (message.includes("no such table") || message.includes("D1 binding")) {
-    return "Kho dữ liệu chưa được khởi tạo. Hãy áp dụng migration D1 trước khi sử dụng.";
-  }
-  return message;
 }
 
 export async function GET(request: Request) {
@@ -27,7 +20,7 @@ export async function GET(request: Request) {
     ]);
     return Response.json({ sessions, attempts, reflections });
   } catch (error) {
-    return Response.json({ error: databaseError(error) }, { status: 500 });
+    return handledApiError(error);
   }
 }
 
@@ -125,6 +118,6 @@ export async function POST(request: Request) {
 
     return Response.json({ error: "Nghiệp vụ không được hỗ trợ" }, { status: 400 });
   } catch (error) {
-    return Response.json({ error: databaseError(error) }, { status: 500 });
+    return handledApiError(error);
   }
 }
