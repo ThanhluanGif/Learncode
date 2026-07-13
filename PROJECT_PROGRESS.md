@@ -85,6 +85,14 @@
 - Đã push commit `b160ea6`, đóng gói artifact sạch và tạo version 6; deployment private `succeeded` nhưng `/`, `/openapi.json`, `/docs`, `/api/health`, `/api/me` vẫn trả cùng platform HTML 500.
 - Bước tiếp theo: kiểm tra lại auth/dispatch khi project Sites thực sự phục hồi; sau đó chạy năm live checks, đóng ERR-014/DBG-009, điền done-evidence và gọi `flow card done C-001`.
 
+### 2026-07-13 22:04 +07 - Kích hoạt vòng thực thi liên tục
+
+- Flow resume xác nhận C-001 vẫn in-flight; C-002 đến C-006 bị dependency chặn đúng thiết kế.
+- OpenAI Status vẫn ghi incident chung đã `Resolved`, nhưng kiểm tra production mới nhất cho thấy version 6, access `custom`, và cả năm route vẫn trả platform HTML `500`.
+- Chu trình tiếp tục được cố định: kiểm tra live -> sửa khi có nguyên nhân thuộc code -> lint/build/test/migration -> cập nhật card và ba báo cáo -> commit/push -> đóng gói/deploy private -> verify live.
+- Không tạo version/deployment mới khi chỉ thay đổi báo cáo và artifact ứng dụng không đổi; việc lặp deployment giống hệt không tạo thêm bằng chứng và có thể che khuất root cause.
+- C-001 chỉ được đóng khi world-state live xanh. Sau đó Flow mới mở C-002 và lặp cùng chu trình cho từng card.
+
 ## Commit theo chặng
 
 | Commit | Nội dung | QA |
