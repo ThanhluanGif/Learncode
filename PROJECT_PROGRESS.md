@@ -13,8 +13,8 @@
 | --- | --- | --- |
 | Khởi tạo Flow | DONE | Flow mode `work`, project type `web` |
 | Đánh giá codebase hiện tại | DONE | Mechanical gate PASS sau xác nhận của chủ dự án |
-| Idea | TODO | Chưa mở gate |
-| Research | TODO | Chưa mở gate |
+| Idea | DONE | Mechanical + semantic gate PASS |
+| Research | IN_PROGRESS | Stage 01 đã mở |
 | Scope | TODO | Chưa mở gate |
 | PRD | TODO | Chưa mở gate |
 | ADR | TODO | Chưa mở gate |
@@ -43,3 +43,4 @@
 | --- | --- | --- |
 | `FLOW-000` | Khởi tạo hồ sơ Flow và baseline | lint PASS; build PASS; test FAIL đã ghi nhận |
 | `FLOW-001` | Đóng gate brownfield assessment | `flow assess` PASS |
+| `FLOW-002` | Chốt ý tưởng sản phẩm | Stage 00 mechanical + semantic PASS |
