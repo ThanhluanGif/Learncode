@@ -33,10 +33,11 @@ import {
   Target,
   TimerReset,
   Trophy,
+  ExternalLink,
   X,
   Zap,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 type NavKey = "home" | "roadmap" | "practice" | "contest" | "library";
 type Level = "A" | "B" | "C";
@@ -107,6 +108,14 @@ const resources = [
   { name: "LQDOJ", type: "Thi thử & luyện tập", note: "Cộng đồng năng động", rating: "4.8", icon: Trophy, color: "violet" },
   { name: "Chuyên đề Scratch", type: "Giáo trình Bảng A", note: "Bám sát đề thi", rating: "4.8", icon: Sparkles, color: "pink" },
   { name: "Kho đề cộng đồng", type: "Đề thi 40+ tỉnh", note: "2018–2024 · Có đáp án", rating: "4.9", icon: FolderCode, color: "cyan" },
+];
+
+const officialExamYears = [
+  { year: "2025", title: "Vòng loại Quốc gia · Bảng B", format: "Lập trình · 120 phút", focus: "Mảng, số học, mô phỏng", url: "https://tinhoctre.vn/contest/tht2025_vongloaiqgdot3_thithu_b", status: "Có đề trên hệ thống" },
+  { year: "2024", title: "Kho đề Hội thi Tin học trẻ", format: "Lập trình · theo bảng", focus: "Luyện đề và chấm trực tuyến", url: "https://tinhoctre.vn/problems/", status: "Tra cứu đề gốc" },
+  { year: "2023", title: "Kho đề Hội thi Tin học trẻ", format: "Lập trình · theo bảng", focus: "Thuật toán nền tảng", url: "https://tinhoctre.vn/problems/", status: "Tra cứu đề gốc" },
+  { year: "2022", title: "Vòng sơ khảo Quốc gia", format: "Đề PDF · Bảng A/B/C", focus: "Dãy số, xử lý dữ liệu", url: "https://tinhoctre.vn/pdf/1ac89a8d-7f75-4c96-b6ef-3c51214fe345.pdf", status: "Đề gốc PDF" },
+  { year: "2016–2021", title: "Kho lưu trữ chính thức", format: "Đề theo năm và bảng", focus: "Ôn theo chuyên đề", url: "https://tinhoctre.vn/problems/", status: "Lọc tại kho đề" },
 ];
 
 function ProgressRing({ value, size = 86 }: { value: number; size?: number }) {
@@ -269,20 +278,26 @@ function ContestView({ onStart }: { onStart: () => void }) {
 }
 
 function LibraryView() {
-  return <div className="view inner-view"><div className="page-intro"><p className="eyebrow"><Library size={15} /> HỌC LIỆU TUYỂN CHỌN</p><h1>Một kho học liệu, đúng thứ bạn cần.</h1><p>Tài liệu được đánh giá theo độ tin cậy, độ bám đề và mức độ phù hợp với từng giai đoạn.</p></div>
-    <label className="library-search"><Search size={20} /><input placeholder="Tìm giáo trình, chuyên đề, hệ thống chấm..." /></label>
-    <div className="resource-grid">{resources.map((resource) => { const Icon = resource.icon; return <article className="resource-card card" key={resource.name}><div className={`resource-icon ${resource.color}`}><Icon size={24} /></div><div className="resource-rating"><span>★</span> {resource.rating}</div><h3>{resource.name}</h3><p>{resource.type}</p><small>{resource.note}</small><button>Mở học liệu <ArrowRight size={16} /></button></article>; })}</div>
-    <section className="learning-note card"><div className="note-illustration"><BookOpen size={30} /></div><div><span>NGUYÊN TẮC TỰ HỌC</span><h3>Đọc lời giải không đồng nghĩa với đã hiểu.</h3><p>Hãy tự cài đặt lại, nộp bài và sửa cho đến khi hệ thống báo <b>Accepted</b>. Mỗi lỗi sai là một phần của bài học.</p></div><CheckCircle2 size={34} /></section>
+  const [year, setYear] = useState("Tất cả");
+  const [query, setQuery] = useState("");
+  const years = ["Tất cả", "2025", "2024", "2023", "2022", "2016–2021"];
+  const visibleExams = officialExamYears.filter((exam) => (year === "Tất cả" || exam.year === year) && `${exam.year} ${exam.title} ${exam.focus}`.toLowerCase().includes(query.toLowerCase()));
+  return <div className="view inner-view"><div className="page-intro"><p className="eyebrow"><Library size={15} /> THƯ VIỆN HỌC THUẬT</p><h1>Học từ đề thật, hiểu đến gốc.</h1><p>Kho đề trong 10 năm gần đây được dẫn về nguồn chính thức; mỗi đề đi cùng cách ôn, nhật ký lỗi và mục tiêu kỹ năng.</p></div>
+    <section className="academic-hero card"><div><span className="tag primary">NGUỒN ĐÃ KIỂM CHỨNG</span><h2>Đề Tin học trẻ chính thức<br />2016–2025</h2><p>Không sao chép lại đề có bản quyền. Mở đề gốc trên hệ thống của Ban tổ chức, sau đó quay lại đây để học theo chuyên đề và ghi nhận tiến độ.</p><div className="academic-meta"><span><CheckCircle2 size={15} /> Ưu tiên tinhoctre.vn</span><span><CalendarDays size={15} /> 10 mùa thi</span><span><BookOpen size={15} /> A · B · C</span></div></div><div className="research-path"><span>QUY TRÌNH HỌC ĐỀ</span><div><i>01</i><p><b>Đọc & phân loại</b><small>Gắn thẻ chủ đề, mức độ</small></p></div><div><i>02</i><p><b>Tự giải có giờ</b><small>Không xem lời giải sớm</small></p></div><div><i>03</i><p><b>Phản tư sau thi</b><small>Ghi lỗi và kế hoạch ôn</small></p></div></div></section>
+    <div className="library-toolbar"><label className="library-search"><Search size={20} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm năm, bảng hoặc chuyên đề..." /></label><div className="year-filter">{years.map((item) => <button className={year === item ? "active" : ""} onClick={() => setYear(item)} key={item}>{item}</button>)}</div></div>
+    <section className="exam-archive"><div className="archive-heading"><div><h2>Đề thi & kho lưu trữ chính thức</h2><p>{visibleExams.length} nhóm tài liệu phù hợp · luôn mở ở trang nguồn</p></div><a href="https://tinhoctre.vn/problems/" target="_blank" rel="noreferrer">Mở kho đề chính thức <ExternalLink size={15} /></a></div><div className="exam-grid">{visibleExams.map((exam) => <article className="exam-card card" key={exam.year}><div className="exam-year">{exam.year}</div><div><span className="official-label"><CheckCircle2 size={13} /> NGUỒN CHÍNH THỨC</span><h3>{exam.title}</h3><p>{exam.format}</p><small><b>Trọng tâm:</b> {exam.focus}</small></div><div className="exam-card-bottom"><span>{exam.status}</span><a href={exam.url} target="_blank" rel="noreferrer">Xem nguồn <ExternalLink size={15} /></a></div></article>)}</div></section>
+    <section className="study-lab"><article className="lab-card card"><span className="mini-icon violet"><BrainCircuit size={19} /></span><h3>Nhật ký sau đề</h3><p>Ghi 1 ý tưởng đúng, 1 lỗi và 1 việc ôn lại. Cách này biến một đề thi thành dữ liệu cho lần sau.</p><button>Viết phản tư <ArrowRight size={16} /></button></article><article className="lab-card card"><span className="mini-icon orange"><TimerReset size={19} /></span><h3>Phiên tự học 150 phút</h3><p>Chọn một đề, bật đồng hồ, tự chấm trên hệ thống nguồn và so sánh chiến thuật sau khi nộp.</p><button>Khởi động phiên <ArrowRight size={16} /></button></article><article className="lab-card card"><span className="mini-icon green"><Target size={19} /></span><h3>Ôn theo lỗ hổng</h3><p>Ưu tiên các chủ đề xuất hiện nhiều trong đề thật: mảng, số học, tham lam và tìm kiếm.</p><button>Xem bản đồ kỹ năng <ArrowRight size={16} /></button></article></section>
+    <h2 className="learning-materials-title">Học liệu bổ trợ đã tuyển chọn</h2><div className="resource-grid">{resources.map((resource) => { const Icon = resource.icon; return <article className="resource-card card" key={resource.name}><div className={`resource-icon ${resource.color}`}><Icon size={24} /></div><div className="resource-rating"><span>★</span> {resource.rating}</div><h3>{resource.name}</h3><p>{resource.type}</p><small>{resource.note}</small><button>Mở học liệu <ArrowRight size={16} /></button></article>; })}</div>
   </div>;
 }
 
 function LessonModal({ open, onClose, onComplete }: { open: boolean; onClose: () => void; onComplete: () => void }) {
   const [step, setStep] = useState(1);
   const [answer, setAnswer] = useState<string | null>(null);
-  useEffect(() => { if (open) { setStep(1); setAnswer(null); } }, [open]);
+  const closeLesson = () => { setStep(1); setAnswer(null); onClose(); };
   if (!open) return null;
   return <div className="modal-shell" role="dialog" aria-modal="true" aria-label="Bài học tìm kiếm nhị phân"><div className="lesson-modal">
-    <header><div><span className="tag primary">BÀI 9 · TÌM KIẾM</span><h2>Binary Search trên kết quả</h2></div><div className="lesson-modal-progress"><span>{step}/3</span><div><i style={{ width: `${step * 33.33}%` }} /></div></div><button onClick={onClose} aria-label="Đóng bài học"><X size={21} /></button></header>
+    <header><div><span className="tag primary">BÀI 9 · TÌM KIẾM</span><h2>Binary Search trên kết quả</h2></div><div className="lesson-modal-progress"><span>{step}/3</span><div><i style={{ width: `${step * 33.33}%` }} /></div></div><button onClick={closeLesson} aria-label="Đóng bài học"><X size={21} /></button></header>
     <div className="lesson-step-tabs"><span className={step >= 1 ? "active" : ""}><i>{step > 1 ? <Check size={13} /> : 1}</i> Khám phá</span><b /><span className={step >= 2 ? "active" : ""}><i>{step > 2 ? <Check size={13} /> : 2}</i> Thử sức</span><b /><span className={step >= 3 ? "active" : ""}><i>3</i> Ghi nhớ</span></div>
     <main>
       {step === 1 && <div className="lesson-content"><p className="lesson-kicker">Ý TƯỞNG CỐT LÕI</p><h3>Đừng tìm đáp án. Hãy hỏi đáp án có khả thi không.</h3><p>Với bài toán chia dãy thành <b>K</b> đoạn sao cho tổng lớn nhất là nhỏ nhất, đáp án nằm trong khoảng:</p><div className="formula-box"><span>max(A)</span><i>≤</i><strong>ĐÁP ÁN</strong><i>≤</i><span>sum(A)</span></div><div className="concept-callout"><Lightbulb size={20} /><p>Nếu chia được với giới hạn <b>X</b>, ta luôn chia được với mọi giới hạn lớn hơn X. Đây chính là <b>tính đơn điệu</b>.</p></div><div className="binary-demo"><div className="number-line">{[8, 12, 16, 20, 24, 28, 32].map((n, i) => <span className={i < 3 ? "no" : i === 3 ? "mid" : "yes"} key={n}>{n}<small>{i < 3 ? "Không" : "Có"}</small></span>)}</div><p>Ranh giới đầu tiên có thể là đáp án nhỏ nhất.</p></div></div>}
@@ -291,7 +306,7 @@ function LessonModal({ open, onClose, onComplete }: { open: boolean; onClose: ()
       ].map(([key, text]) => <button key={key} className={`${answer === key ? "selected" : ""} ${answer && key === "B" ? "correct" : ""}`} onClick={() => setAnswer(key)}><i>{key}</i><span>{text}</span>{answer && key === "B" && <CheckCircle2 size={19} />}</button>)}</div>{answer && <div className={`answer-feedback ${answer === "B" ? "right" : "wrong"}`}><strong>{answer === "B" ? "Chính xác!" : "Chưa đúng — thử nhìn lại cận dưới."}</strong><span>Cận dưới là phần tử lớn nhất (10), cận trên là tổng dãy (32).</span></div>}</div>}
       {step === 3 && <div className="lesson-content summary-content"><div className="success-orbit"><CheckCircle2 size={44} /></div><p className="lesson-kicker">HOÀN THÀNH BÀI HỌC</p><h3>Bạn đã mở khóa một kỹ thuật quan trọng!</h3><p>Ghi nhớ công thức tư duy 3 bước trước khi chuyển sang bài luyện.</p><div className="summary-steps"><div><i>1</i><span><strong>Tìm khoảng đáp án</strong><small>[min khả thi, max khả thi]</small></span></div><div><i>2</i><span><strong>Viết hàm check(mid)</strong><small>Trả lời Có hoặc Không</small></span></div><div><i>3</i><span><strong>Thu hẹp về ranh giới</strong><small>Đến đáp án tối ưu</small></span></div></div><div className="xp-earned"><Zap size={22} fill="currentColor" /><span>+40 XP</span><small>Kiến thức mới</small></div></div>}
     </main>
-    <footer><button className="ghost-button" onClick={step === 1 ? onClose : () => setStep(step - 1)}>{step === 1 ? "Học sau" : "Quay lại"}</button><button className="primary-button" disabled={step === 2 && !answer} onClick={() => { if (step < 3) setStep(step + 1); else { onComplete(); onClose(); } }}>{step === 3 ? "Luyện bài đầu tiên" : "Tiếp tục"}<ArrowRight size={17} /></button></footer>
+    <footer><button className="ghost-button" onClick={step === 1 ? closeLesson : () => setStep(step - 1)}>{step === 1 ? "Học sau" : "Quay lại"}</button><button className="primary-button" disabled={step === 2 && !answer} onClick={() => { if (step < 3) setStep(step + 1); else { onComplete(); closeLesson(); } }}>{step === 3 ? "Luyện bài đầu tiên" : "Tiếp tục"}<ArrowRight size={17} /></button></footer>
   </div></div>;
 }
 
@@ -307,11 +322,6 @@ export default function HomePage() {
   const [contestOpen, setContestOpen] = useState(false);
   const [level, setLevel] = useState<Level>("B");
   const [toast, setToast] = useState("");
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem("tht-active-view") as NavKey | null;
-    if (stored && navItems.some((item) => item.id === stored)) setActive(stored);
-  }, []);
 
   const navigate = (key: NavKey) => {
     setActive(key);
