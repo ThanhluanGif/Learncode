@@ -93,6 +93,13 @@
 - Không tạo version/deployment mới khi chỉ thay đổi báo cáo và artifact ứng dụng không đổi; việc lặp deployment giống hệt không tạo thêm bằng chứng và có thể che khuất root cause.
 - C-001 chỉ được đóng khi world-state live xanh. Sau đó Flow mới mở C-002 và lặp cùng chu trình cho từng card.
 
+### 2026-07-13 22:07 +07 - C-001 dispatch metadata probe
+
+- Sites metadata hợp lệ: project `active`, auth client có mặt, bypass token có mặt, access `custom`, đúng một allowed user, không có allowed group, access revision `1`.
+- Cả request có bypass và request ẩn danh đều nhận cùng platform HTML `500`; `/signin-with-chatgpt?return_to=%2F` cũng trả `500` tại Cloudflare edge.
+- Kết luận vòng này: không thiếu cấu hình SIWC hoặc access policy trong metadata mà connector công bố; lỗi còn lại nằm ở dispatch/runtime bên ngoài artifact ứng dụng.
+- Không sinh version mới vì source ứng dụng và build artifact không đổi. Tiếp tục giữ version 6 và live gate C-001 ở trạng thái chưa đạt.
+
 ## Commit theo chặng
 
 | Commit | Nội dung | QA |

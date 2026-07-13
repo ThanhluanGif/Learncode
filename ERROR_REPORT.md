@@ -149,5 +149,6 @@
   - trình duyệt owner-only hiện “Continue with ChatGPT”, nhưng `/signin-with-chatgpt` của site trả cùng platform 500; bypass-token cũng 500.
 - Kiểm tra lặp có giới hạn: rotate bypass token không thay đổi kết quả; version 6 được tạo từ commit đã push `b160ea6` sau lint/build/test/fresh-migration PASS, deployment `succeeded`, nhưng cả năm live route vẫn platform 500.
 - Kiểm tra liên tục lúc `2026-07-13 22:04 +07`: version 6 vẫn hiện hành, access vẫn `custom`, năm live route tiếp tục trả cùng platform HTML 500 dù incident chung đã `Resolved`.
+- Metadata probe lúc `2026-07-13 22:07 +07`: site active, auth client/token đầy đủ, policy custom hợp lệ với một user và không group; request bypass, request ẩn danh và `/signin-with-chatgpt?return_to=%2F` đều platform 500 tại Cloudflare edge.
 - Xử lý hiện tại: giữ version 6 làm bản production dự kiến; không thay đổi access policy, không mở site công khai và không hạ chuẩn live gate.
 - Tiêu chí đóng: incident được khắc phục và production URL trả health `200`, OpenAPI/docs `200`, missing auth `401`, authenticated `/api/me` `200`.
