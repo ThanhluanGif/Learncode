@@ -26,6 +26,8 @@ Các lỗi local và artifact đã sửa có bằng chứng đỏ -> xanh. Live 
 | DBG-015 | ERR-020 QA count query | `no such table: sources` | Đổi sang `content_sources`; counts 3/2/9 | DONE |
 | DBG-016 | ERR-021 insecure WebSocket contract | Security test FAIL tại BA workflow | Hai endpoint dùng `wss`; focused test PASS | DONE |
 | DBG-017 | ERR-022 taste-skill install | Python ZIP download lỗi CA | Git sparse installer cài 2 skill project-local | DONE |
+| DBG-018 | ERR-023 mobile profile + C-005 accessibility | Nút profile rỗng; tabs/modal thiếu keyboard focus contract | Avatar/label đúng; arrow tabs, inert background, focus loop, Escape/restore PASS | DONE |
+| DBG-019 | ERR-024 production design-token drift | `/flow tokens` mismatch DESIGN mới với CSS production cũ | Chờ owner approval + C-006; mock inline CSS đã qua `/flow design` | OPEN |
 
 ## Quy tắc ghi nhận
 
@@ -70,3 +72,5 @@ Một lỗi chỉ được chuyển sang `DONE` khi có đủ:
 - `DBG-014` retest (`2026-07-13 23:17 +07`): lint/build PASS, tests 12/12, Flow consistency 7/7 và C-001–C-004 check PASS ở `todo`; exact-bundle strict verifier vẫn RED đúng tại official 2022 B. Không deploy artifact chưa đạt gate.
 - `DBG-016` (`2026-07-13 23:22 +07`): thêm regression scan trước khi sửa và tái hiện FAIL 0/1 tại `docs/BA_WORKFLOW.md`; đổi hai endpoint production sang `wss://`, thêm quy tắc chống hạ cấp; focused PASS 1/1, full tests 13/13, lint/build/Flow checks PASS và repository scan sạch.
 - `DBG-017` (`2026-07-14 01:51 +07`): audit source commit `b177427`, chọn hai skill phù hợp existing UI; Python download lỗi CA nhưng helper `--method git` cài thành công vào `.agents/skills` mà không hạ TLS.
+- `DBG-018` (`2026-07-14 02:04 +07`): render C-005 ở 1440x1000 và 360x800, sửa selector làm mất avatar mobile; bổ sung roving tabindex/ArrowLeft/ArrowRight/Home/End cho tab, inert background, focus loop và focus restore cho modal. Browser QA không overflow, min supporting type 12 px, console sạch; Flow design/lint/build/tests 13/13 PASS. Card vẫn `todo` đúng gate vì owner approval chưa có.
+- `DBG-019` (`2026-07-14 02:07 +07`): `/flow tokens` trả RED vì CSS production vẫn dùng cluster cũ và runner không đọc CSS inline của mock. Ghi lỗi mở thay vì coi là pass; chỉ đóng trong C-006 sau dependency gates và owner approval.

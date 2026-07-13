@@ -20,11 +20,15 @@ engine concepts. Engine words (workflow, trigger, action, job, queue, webhook, a
 prompt…) NEVER appear in user-facing copy. Define this project's vocabulary in the
 table below and use it everywhere.
 
-### Project vocabulary (fill per project — strings, never code paths)
+### Project vocabulary
 
 | Engine concept | This project's user word |
 |---|---|
-| _(e.g. async agent run)_ | _(e.g. "đang phân loại…")_ |
+| study session | phiên học |
+| problem attempt | lần làm bài |
+| learning reflection | rút kinh nghiệm |
+| progress aggregate | tiến độ học tập |
+| pilot feedback | góp ý bản thử nghiệm |
 
 ## Five rules that override everything
 
@@ -68,42 +72,49 @@ Every object-detail page:
 - **Modal-first sub-actions** — small focused modals, one CTA. No multi-screen flows.
 - **The overview shows less, not more.** Heavy lifting goes to specialized tabs.
 
-## Editorial Minimal tokens (locked)
+## Academic Focus tokens (locked 2026-07-14)
+
+The owner requested a deliberate whole-cluster redesign using the project-local Taste
+skills. This replaces the original Editorial Minimal font/palette cluster. The product is
+a dense learning workspace, so readability and trust take priority over decorative style.
 
 | Token | Value | Use |
 |---|---|---|
-| `--bg-base` | `#FFFFFF` | page bg, cards |
-| `--bg-subtle` | `#FAFAFA` | sidebar, savebar, secondary surfaces |
-| `--bg-muted` | `#F4F4F5` | hover, muted chips |
-| `--fg-base` | `#09090B` | primary text, primary buttons |
-| `--fg-muted` | `#52525B` | body, descriptions |
-| `--fg-subtle` | `#71717A` | helper text, timestamps |
-| `--border` | `#E4E4E7` | all 1px borders |
-| `--accent` | `#4F46E5` | focus rings, accent links, validate-ok |
+| `--bg-base` | `#F6F7FA` | page background |
+| `--surface` | `#FFFFFF` | primary surfaces |
+| `--bg-subtle` | `#F0F2F7` | secondary surfaces and hover |
+| `--fg-base` | `#172033` | primary text and primary buttons |
+| `--fg-muted` | `#566074` | body and descriptions |
+| `--fg-subtle` | `#7B8495` | helper text and timestamps |
+| `--border` | `#DDE2EA` | all 1px borders |
+| `--accent` | `#3148C8` | focus rings, active lens, primary action |
+| `--accent-soft` | `#EEF1FF` | selected and contextual surfaces |
+| `--success` | `#197A55` | verified source and completed state only |
+| `--warning` | `#A45B17` | attention state only |
+| `--danger` | `#B13A3A` | error state only |
 
-**Typography**: `Inter` body/labels/buttons · `Fraunces` h1, card titles, prominent stat
-values ONLY · `JetBrains Mono` identifiers, dates, counts, machine-shaped content ONLY.
-Don't sprinkle serif on body text or mono on prose.
+**Typography**: `Be Vietnam Pro` for all Vietnamese headings, body, labels, and buttons.
+`JetBrains Mono` is reserved for identifiers, dates, timers, counts, and code. Minimum
+visible supporting text is 12px; body text is 14-16px. No decorative serif.
 
 **Borders**: 1px `var(--border)`. No drop shadows except focus rings, active sidebar item,
 and hero-card hover lift. One purposeful elevation, never shadow noise.
 
-## Soft gradients (highlight, not decorate)
+## Calm tints (highlight, not decorate)
 
-Hero surfaces ONLY (hero action cards, gallery/list covers, pulse backdrop). NEVER on
-tables, form inputs, sidebars, page backgrounds, or body rows.
+Use solid tinted surfaces on hero actions, selected rows, source provenance, and status
+messages. Never tint form inputs, body rows, or the whole page. Gradients are not part of
+this workspace's visual system.
 
 ```css
---grad-peach:    linear-gradient(135deg, #FFF4EC 0%, #FEE7D6 100%);  /* action / first in a series */
---grad-mint:     linear-gradient(135deg, #ECFDF3 0%, #D1F4DD 100%);  /* money / success / all-green */
---grad-sky:      linear-gradient(135deg, #EEF4FF 0%, #DCE7FF 100%);  /* info / context banners */
---grad-lavender: linear-gradient(135deg, #F3EEFF 0%, #E2D6FB 100%);  /* primary surface / pulse */
---grad-rose:     linear-gradient(135deg, #FFF1F4 0%, #FDDDE3 100%);  /* social / sharing / accent */
---grad-pulse:    linear-gradient(90deg, #FAFAFA 0%, #F3EEFF 50%, #FAFAFA 100%); /* subtle strips */
+--tint-accent: #EEF1FF;
+--tint-success: #EAF7F1;
+--tint-warning: #FFF4E7;
+--tint-danger: #FDEEEE;
 ```
 
-Hover on gradient cards: lift `translateY(-1px)` + `box-shadow: 0 8px 24px rgba(9,9,11,.06)`;
-no hard accent border.
+Hover on a primary action may lift `translateY(-1px)` with one soft shadow. Other
+surfaces rely on border and spacing rather than elevation.
 
 ## Forms
 

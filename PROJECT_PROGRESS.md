@@ -207,3 +207,13 @@
 | `QA-20260713-2317` | QA lại sau merge docs/report | lint/build PASS; tests 12/12; Flow consistency/check PASS; strict 2022+B RED đúng |
 | `SEC-20260713-2322` | Loại WebSocket plaintext khỏi contract | focused RED -> PASS; lint/build PASS; tests 13/13; scan sạch |
 | `UI-SKILL-20260714` | Cài taste-skill project-local | 2 SKILL.md đã audit và cài; git fallback sau lỗi Python CA |
+
+### 2026-07-14 02:04 +07 - C-005 learner workspace mock sẵn sàng để duyệt
+
+- Theo yêu cầu ưu tiên UI của chủ dự án, C-005 được đưa vào in-flight sớm và khoản vay gate được ghi rõ trong `DEBT.md`; C-006 production vẫn không được mở trước khi C-001–C-004 đạt done-evidence và owner phê duyệt mock.
+- Đã khóa lại `DESIGN.md` theo vocabulary học tập Việt Nam, một accent indigo, kiểu chữ Be Vietnam Pro/JetBrains Mono, supporting text tối thiểu 12 px và không dùng gradient trong workspace.
+- Đã thay mock cũ bằng hồ sơ luyện thi object-first gồm: nguồn đề xác minh, hai hành động tiếp theo bất đối xứng, kho đề/lọc, phiên học và lần làm bài, reflection modal, tiến độ có giải thích, pilot feedback, cùng loading/empty/error states.
+- QA browser ở 1440x1000 và 360x800: không overflow ngang; tab click và phím mũi tên PASS; modal inert/focus-loop/Escape/focus-restore PASS; console không có warning/error. Lỗi avatar mobile bị selector ẩn nhầm đã sửa và retest.
+- Regression QA: Flow design mechanical PASS; semantic design checklist PASS; lint PASS; production build PASS; product/security tests PASS 13/13.
+- `flow tokens` RED đúng tại CSS production cũ và được mở thành ERR-024/DBG-019; runner không quét inline CSS của mock. Đây không phải bằng chứng C-005 hỏng, nhưng là gate bắt buộc phải xanh khi triển khai C-006.
+- C-005 giữ `todo` vì thiếu đúng bằng chứng cuối: owner phải xem và phê duyệt mock. Không deploy production UI trong vòng này.

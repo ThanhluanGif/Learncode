@@ -225,3 +225,18 @@
 - Lỗi: `SSLCertVerificationError: unable to get local issuer certificate` từ `urllib`; git HTTPS trên cùng máy vẫn xác minh và clone repository thành công.
 - Xử lý: không tắt TLS hoặc certificate verification; chạy lại helper chính thức với `--method git`.
 - Bằng chứng đóng: cài thành công `design-taste-frontend` và `redesign-existing-projects` vào `.agents/skills`, mỗi thư mục có `SKILL.md` đúng frontmatter.
+
+### ERR-023 - Nút hồ sơ mobile bị ẩn cả avatar
+
+- Phát hiện: 2026-07-14 khi render mock C-005 ở viewport 360x800.
+- Trước sửa: media query `.profile span { display: none; }` ẩn cả tên và avatar vì cả hai đều là `span`, để lại một nút trắng rỗng ở đầu trang.
+- Sửa: chỉ ẩn `.profile-name`, giữ `.avatar`, đẩy profile sang mép phải ở breakpoint nhỏ và thêm accessible name `Mở hồ sơ Nguyễn An`.
+- Bằng chứng xanh: avatar `NA` hiển thị ở 360 px; button có hộp 46 px nằm trọn trong viewport; document scroll width bằng 360 px; console không có warning/error.
+- Trạng thái: DONE trong mock. Production UI chưa được sửa vì C-005 còn chờ owner phê duyệt.
+
+### ERR-024 - Design tokens production chưa đồng bộ với C-005
+
+- Phát hiện: 2026-07-14 khi chạy thêm `/flow tokens` sau QA mock.
+- Hiện trạng: runner không quét CSS inline của `mocks/learning-workspace.html` và so `DESIGN.md` mới với CSS production cũ; vì vậy báo mismatch ở accent, background, border và typography cluster.
+- Phân loại: OPEN, là drift thật giữa mock đã duyệt kỹ thuật và production chưa triển khai; không được đổi CSS production trong C-005.
+- Tiêu chí đóng: sau khi C-001–C-004 có done-evidence và owner phê duyệt C-005, C-006 chuyển tokens vào production CSS, loại token thừa và `/flow tokens` PASS.
