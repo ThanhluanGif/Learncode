@@ -100,6 +100,13 @@
 - Kết luận vòng này: không thiếu cấu hình SIWC hoặc access policy trong metadata mà connector công bố; lỗi còn lại nằm ở dispatch/runtime bên ngoài artifact ứng dụng.
 - Không sinh version mới vì source ứng dụng và build artifact không đổi. Tiếp tục giữ version 6 và live gate C-001 ở trạng thái chưa đạt.
 
+### 2026-07-13 22:09 +07 - Goal blocked audit đạt ngưỡng
+
+- Goal-loop lần thứ ba liên tiếp tái hiện cùng platform HTML `500` trên `/`, `/openapi.json`, `/docs`, `/api/health`, `/api/me` và `/signin-with-chatgpt?return_to=%2F`.
+- Code, exact production bundle, D1 migrations, deployment artifact, auth client, bypass token và custom allowlist đã được kiểm tra; không còn thay đổi an toàn nào trong phạm vi hiện tại có thể cô lập sâu hơn.
+- Goal được phép chuyển sang `blocked` theo ngưỡng ba lượt liên tiếp. C-001 giữ `todo`; C-002 đến C-006 vẫn bị dependency chặn.
+- Quyền cần từ chủ dự án: cho phép tạm chuyển access policy từ `custom` sang `public`, kiểm tra các route khi bỏ SIWC dispatch, rồi lập tức khôi phục `custom`. Không thực hiện thay đổi quyền khi chưa có xác nhận rõ ràng.
+
 ## Commit theo chặng
 
 | Commit | Nội dung | QA |
