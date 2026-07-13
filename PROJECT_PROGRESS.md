@@ -15,7 +15,7 @@
 | Đánh giá codebase hiện tại | DONE | Mechanical gate PASS sau xác nhận của chủ dự án |
 | Idea | DONE | Mechanical + semantic gate PASS |
 | Research | DONE | Mechanical + semantic gate PASS; có 3 đối thủ, 3 phản hồi thật và GTM cụ thể |
-| Scope | IN_PROGRESS | Stage 02 đã mở; đang chuẩn bị cổng quyết định GO/KILL |
+| Scope | BLOCKED | Bản nháp GO đã qua preflight; chờ chủ dự án duyệt cut list bắt buộc |
 | PRD | TODO | Chưa mở gate |
 | ADR | TODO | Chưa mở gate |
 | Contract | TODO | Chưa mở gate |
@@ -38,7 +38,9 @@
 - Idea đã định vị sản phẩm là lớp học tập quanh kho đề chính thức và Online Judge ngoài.
 - Research đã mở trực tiếp VNOJ, HNOJ, LQDOJ; ghi nhận ba phản hồi người học, giá tham chiếu và kênh thử nghiệm VNOI.
 - Stage 01 qua mechanical gate và semantic challenge; Scope được mở để chốt v1/cut list.
-- Bước tiếp theo: soạn Scope, trình chủ dự án duyệt gate bắt buộc trước PRD.
+- Scope đề xuất sáu build cards trong 24–36 giờ agent, tái kiến trúc judge nội bộ cấp C thành deep-link judge ngoài cấp B.
+- `flow status` báo gate Scope `PASS` ở mức cơ học; semantic challenge không phát hiện grade laundering hoặc feature L-impact quá đắt.
+- Bước tiếp theo: chủ dự án duyệt quyết định GO và cut list; chỉ sau xác nhận mới chạy `flow next` để mở PRD.
 
 ## Commit theo chặng
 
@@ -48,3 +50,4 @@
 | `FLOW-001` | Đóng gate brownfield assessment | `flow assess` PASS |
 | `FLOW-002` | Chốt ý tưởng sản phẩm | Stage 00 mechanical + semantic PASS |
 | `FLOW-003` | Nghiên cứu thị trường và hành vi học | Stage 01 mechanical + semantic PASS |
+| `FLOW-004` | Soạn phạm vi v1 để duyệt | Scope preflight PASS; dừng tại mandatory sign-off |

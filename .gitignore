@@ -45,3 +45,4 @@ next-env.d.ts
 MODE
 PROJECT_TYPE
 .flow/
+/flow/.lock
