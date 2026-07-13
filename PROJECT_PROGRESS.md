@@ -107,6 +107,12 @@
 - Goal được phép chuyển sang `blocked` theo ngưỡng ba lượt liên tiếp. C-001 giữ `todo`; C-002 đến C-006 vẫn bị dependency chặn.
 - Quyền cần từ chủ dự án: cho phép tạm chuyển access policy từ `custom` sang `public`, kiểm tra các route khi bỏ SIWC dispatch, rồi lập tức khôi phục `custom`. Không thực hiện thay đổi quyền khi chưa có xác nhận rõ ràng.
 
+### 2026-07-13 22:19 +07 - Resumed blocked audit 1/3
+
+- Sau yêu cầu tiếp tục, Flow resume xác nhận C-001 vẫn là card duy nhất đang in-flight; chu kỳ blocker sau khi resume được tính lại từ đầu.
+- Version 6 vẫn ở chế độ riêng tư `custom`. Sáu route `/`, `/openapi.json`, `/docs`, `/api/health`, `/api/me` và `/signin-with-chatgpt?return_to=%2F` tiếp tục trả platform HTML `500` dù dùng bypass token hiện hành.
+- Đây là lần tái hiện thứ nhất trong chu kỳ audit mới. Không đổi access policy vì yêu cầu “tiếp tục” không phải xác nhận rõ ràng cho việc tạm công khai site; không tạo deployment trùng lặp khi artifact ứng dụng không đổi.
+
 ## Commit theo chặng
 
 | Commit | Nội dung | QA |

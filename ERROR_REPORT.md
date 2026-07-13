@@ -151,5 +151,6 @@
 - Kiểm tra liên tục lúc `2026-07-13 22:04 +07`: version 6 vẫn hiện hành, access vẫn `custom`, năm live route tiếp tục trả cùng platform HTML 500 dù incident chung đã `Resolved`.
 - Metadata probe lúc `2026-07-13 22:07 +07`: site active, auth client/token đầy đủ, policy custom hợp lệ với một user và không group; request bypass, request ẩn danh và `/signin-with-chatgpt?return_to=%2F` đều platform 500 tại Cloudflare edge.
 - Goal-loop lần ba lúc `2026-07-13 22:09 +07`: sáu route tiếp tục platform 500, đáp ứng ngưỡng blocker ba lượt liên tiếp. Bước chẩn đoán còn lại cần quyền chủ dự án để tạm chuyển access `custom` -> `public` -> kiểm tra -> khôi phục `custom`.
+- Resumed audit lần 1 lúc `2026-07-13 22:19 +07`: sau khi người dùng yêu cầu tiếp tục, cả sáu route vẫn platform 500 với bypass token hiện hành. Site được giữ ở `custom`; chưa có quyền rõ ràng để thực hiện phép thử `public` tạm thời.
 - Xử lý hiện tại: giữ version 6 làm bản production dự kiến; không thay đổi access policy, không mở site công khai và không hạ chuẩn live gate.
 - Tiêu chí đóng: incident được khắc phục và production URL trả health `200`, OpenAPI/docs `200`, missing auth `401`, authenticated `/api/me` `200`.
