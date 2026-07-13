@@ -25,6 +25,7 @@ Các lỗi local và artifact đã sửa có bằng chứng đỏ -> xanh. Live 
 | DBG-014 | ERR-019 catalog coverage | 2022+B trả zero exams; chỉ hai seasons | Strict verifier đã đỏ đúng; chờ catalog fix | OPEN |
 | DBG-015 | ERR-020 QA count query | `no such table: sources` | Đổi sang `content_sources`; counts 3/2/9 | DONE |
 | DBG-016 | ERR-021 insecure WebSocket contract | Security test FAIL tại BA workflow | Hai endpoint dùng `wss`; focused test PASS | DONE |
+| DBG-017 | ERR-022 taste-skill install | Python ZIP download lỗi CA | Git sparse installer cài 2 skill project-local | DONE |
 
 ## Quy tắc ghi nhận
 
@@ -68,3 +69,4 @@ Một lỗi chỉ được chuyển sang `DONE` khi có đủ:
 - `DBG-015` (`2026-07-13 23:16 +07`): lệnh đếm ad-hoc dùng nhầm `sources`; đối chiếu schema và chạy lại `content_sources` thành công, xác nhận counts 3/2/9 cùng hai exam rows drift.
 - `DBG-014` retest (`2026-07-13 23:17 +07`): lint/build PASS, tests 12/12, Flow consistency 7/7 và C-001–C-004 check PASS ở `todo`; exact-bundle strict verifier vẫn RED đúng tại official 2022 B. Không deploy artifact chưa đạt gate.
 - `DBG-016` (`2026-07-13 23:22 +07`): thêm regression scan trước khi sửa và tái hiện FAIL 0/1 tại `docs/BA_WORKFLOW.md`; đổi hai endpoint production sang `wss://`, thêm quy tắc chống hạ cấp; focused PASS 1/1, full tests 13/13, lint/build/Flow checks PASS và repository scan sạch.
+- `DBG-017` (`2026-07-14 01:51 +07`): audit source commit `b177427`, chọn hai skill phù hợp existing UI; Python download lỗi CA nhưng helper `--method git` cài thành công vào `.agents/skills` mà không hạ TLS.

@@ -176,6 +176,14 @@
 - Full QA sau sửa: lint PASS, production build PASS, tests PASS 13/13; Flow consistency PASS 7/7 FR và C-001 mechanical check PASS ở trạng thái `todo`.
 - C-001 vẫn in-flight và C-002/C-004 vẫn đỏ ở các gate độc lập; security hotfix không làm tròn trạng thái card.
 
+### 2026-07-14 01:51 +07 - Cài taste-skill và audit UI ban đầu
+
+- Audit repository `Leonxlnx/taste-skill` tại source commit `b177427`; chọn đúng hai skill không chồng lấn cho codebase hiện hữu: `design-taste-frontend` và `redesign-existing-projects`.
+- Cài project-local vào `.agents/skills/` bằng skill-installer. Download ZIP bị lỗi CA của Python; fallback `--method git` giữ xác minh TLS và cài thành công.
+- Design read: workspace học thuật cho học sinh Việt Nam, trust-first và task-first; ưu tiên targeted evolution thay vì thay framework. Dials đề xuất: variance 4, motion 3, density 6.
+- Audit code phát hiện font 6-10px, quá nhiều card/accent, số liệu learner giả, emoji, sidebar desktop nặng và mock dùng pattern ba hero-card đồng đều. Các lỗi này chưa được sửa trong production vì C-005 chưa được owner approve và C-001 đến C-004 chưa qua dependency gate.
+- `flow ready` chỉ cho phép C-001; C-005/C-006 vẫn blocked. Bước UI hợp lệ tiếp theo là nâng mock C-005 để owner xem ở 360/1440, không sửa production frontend trước approval.
+
 ## Commit theo chặng
 
 | Commit | Nội dung | QA |
@@ -198,3 +206,4 @@
 | `C-005-HALTED` | UI mock chưa theo dõi | Không tiếp tục khi dependency C-004 chưa đạt |
 | `QA-20260713-2317` | QA lại sau merge docs/report | lint/build PASS; tests 12/12; Flow consistency/check PASS; strict 2022+B RED đúng |
 | `SEC-20260713-2322` | Loại WebSocket plaintext khỏi contract | focused RED -> PASS; lint/build PASS; tests 13/13; scan sạch |
+| `UI-SKILL-20260714` | Cài taste-skill project-local | 2 SKILL.md đã audit và cài; git fallback sau lỗi Python CA |

@@ -25,6 +25,7 @@
 | ERR-019 | P0 | OPEN | Catalog 2022+B trả zero exams và chưa có đủ mười mùa hoàn chỉnh |
 | ERR-020 | P3 | DONE | Truy vấn đếm QA dùng nhầm bảng `sources` thay vì `content_sources` |
 | ERR-021 | P0 | DONE | Contract BA công bố WebSocket production không mã hóa cho dữ liệu submission |
+| ERR-022 | P3 | DONE | Skill-installer tải ZIP lỗi do Python thiếu CA issuer |
 
 ## Chi tiết
 
@@ -217,3 +218,10 @@
 - Sửa: đổi cả response example và channel template sang `wss://`; thêm yêu cầu production chỉ phát hành endpoint mã hóa và client từ chối hạ cấp.
 - Bằng chứng xanh: focused test PASS 1/1, full tests PASS 13/13, lint/build PASS và quét toàn repository không còn endpoint WebSocket plaintext.
 - Phạm vi: hiện repository chưa có runtime WebSocket implementation; bản vá đóng lỗ hổng trong contract/source mẫu, không tuyên bố realtime judge đã deploy.
+
+### ERR-022 - Skill-installer không tải được ZIP qua Python
+
+- Phát hiện: 2026-07-14 01:47 +07 khi cài `Leonxlnx/taste-skill` project-local.
+- Lỗi: `SSLCertVerificationError: unable to get local issuer certificate` từ `urllib`; git HTTPS trên cùng máy vẫn xác minh và clone repository thành công.
+- Xử lý: không tắt TLS hoặc certificate verification; chạy lại helper chính thức với `--method git`.
+- Bằng chứng đóng: cài thành công `design-taste-frontend` và `redesign-existing-projects` vào `.agents/skills`, mỗi thư mục có `SKILL.md` đúng frontmatter.
