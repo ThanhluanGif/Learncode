@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tin học trẻ LAB — Kiến trúc runtime</title>
+<script>
+  (() => {
+    const saved = localStorage.getItem("tinhoctre-diagram-theme");
+    const dark = saved ? saved === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.classList.toggle("dark", dark);
+  })();
+</script>
+<style>
+  :root {
+    --bg: #f7f5ef;
+    --surface: #fffefa;
+    --surface-2: #efede5;
+    --ink: #17211d;
+    --body: #43504a;
+    --muted: #7c8781;
+    --line: #cdd3ce;
+    --line-soft: #e3e6e1;
+    --green: #2f7661;
+    --green-soft: rgba(47,118,97,.11);
+    --amber: #bd7a2c;
+    --amber-soft: rgba(189,122,44,.12);
+    --blue: #4e7398;
+    --blue-soft: rgba(78,115,152,.11);
+    --violet: #7967a7;
+    --violet-soft: rgba(121,103,167,.11);
+    --rose: #b85d62;
+    --zone: rgba(23,33,29,.025);
+    --shadow: rgba(23,33,29,.12);
+    --serif: ui-serif, Georgia, "Times New Roman", serif;
+    --sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  html.dark {
+    --bg: #111715;
+    --surface: #1a211e;
+    --surface-2: #232c28;
+    --ink: #f3f3ed;
+    --body: #c8cec9;
+    --muted: #8f9a94;
+    --line: #39443f;
+    --line-soft: #2a3430;
+    --green: #72b59c;
+    --green-soft: rgba(114,181,156,.14);
+    --amber: #d9a15e;
+    --amber-soft: rgba(217,161,94,.14);
+    --blue: #86a9ca;
+    --blue-soft: rgba(134,169,202,.14);
+    --violet: #aa98d4;
+    --violet-soft: rgba(170,152,212,.14);
+    --rose: #df858a;
+    --zone: rgba(243,243,237,.025);
+    --shadow: rgba(0,0,0,.3);
+  }
+  * { box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+  body { background: var(--bg); color: var(--body); font-family: var(--sans); }
+  button { font: inherit; }
+
+  .topbar {
+    height: 72px; display: flex; align-items: center; gap: 16px; padding: 10px 18px;
+    border-bottom: 1px solid var(--line-soft); background: color-mix(in srgb, var(--bg) 94%, transparent);
+    position: relative; z-index: 5;
+  }
+  .title { min-width: 270px; }
+  h1 { color: var(--ink); font: 500 20px/1.15 var(--serif); margin: 0 0 4px; }
+  .subtitle { color: var(--muted); font: 10px/1.2 var(--mono); letter-spacing: .085em; text-transform: uppercase; }
+  .flows { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+  .flows::-webkit-scrollbar { display: none; }
+  .chip, .icon-btn, .zoom-btn {
+    color: var(--muted); background: var(--surface); border: 1px solid var(--line);
+    border-radius: 999px; cursor: pointer; white-space: nowrap; transition: .16s ease;
+  }
+  .chip { padding: 6px 11px; font: 10.5px/1 var(--mono); letter-spacing: .035em; }
+  .chip:hover, .icon-btn:hover, .zoom-btn:hover { color: var(--ink); border-color: var(--muted); }
+  .chip.active { color: var(--surface); background: var(--green); border-color: var(--green); }
+  .spacer { flex: 1; }
+  .icon-btn { width: 34px; height: 34px; display: grid; place-items: center; font-size: 15px; flex: none; }
+
+  .stage { position: absolute; inset: 72px 0 0; overflow: hidden; cursor: grab; }
+  .stage.dragging { cursor: grabbing; }
+  .stage svg { width: 100%; height: 100%; display: block; user-select: none; }
+  #svg-content { transform-origin: 0 0; }
+
+  .zone-bg { fill: var(--zone); stroke: var(--line); stroke-width: 1.2; stroke-dasharray: 6 6; }
+  .zone-title { fill: var(--muted); font: 600 11px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+  .zone-sub { fill: var(--muted); font: 10px var(--mono); opacity: .78; }
+
+  .edge { fill: none; stroke: var(--muted); stroke-width: 1.7; marker-end: url(#arrow); transition: opacity .2s, stroke .2s; }
+  .edge.data { stroke: var(--blue); marker-end: url(#arrow-blue); }
+  .edge.external { stroke-dasharray: 6 5; }
+  .edge-label { fill: var(--muted); font: 10px var(--mono); paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; }
+
+  .node { cursor: pointer; transition: opacity .2s; outline: none; }
+  .node .box { fill: var(--surface); stroke: var(--line); stroke-width: 1.4; transition: stroke .15s, filter .15s; }
+  .node:hover .box, .node:focus .box { stroke: var(--green); filter: drop-shadow(0 4px 5px var(--shadow)); }
+  .node.selected .box { stroke: var(--green); stroke-width: 2.3; }
+  .node.platform .box { fill: var(--green-soft); stroke: var(--green); }
+  .node.route .box { fill: var(--blue-soft); stroke: var(--blue); }
+  .node.logic .box { fill: var(--amber-soft); stroke: var(--amber); }
+  .node.store .box { fill: var(--violet-soft); stroke: var(--violet); }
+  .node.external .box { stroke-dasharray: 6 4; }
+  .node-title { fill: var(--ink); font: 600 14px var(--sans); pointer-events: none; }
+  .node-meta { fill: var(--muted); font: 10.5px var(--mono); pointer-events: none; }
+  .node-tag { fill: var(--green); font: 600 9px var(--mono); letter-spacing: .08em; text-transform: uppercase; pointer-events: none; }
+  .route .node-tag { fill: var(--blue); }
+  .logic .node-tag { fill: var(--amber); }
+  .store .node-tag { fill: var(--violet); }
+  .mini-icon { fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+
+  .stage.flowing .edge, .stage.flowing .edge-label, .stage.flowing .node { opacity: .13; }
+  .stage.flowing .zone { opacity: .42; }
+  .stage.flowing .edge.lit {
+    opacity: 1; stroke: var(--green); marker-end: url(#arrow-green); stroke-dasharray: 8 6;
+    animation: march .8s linear infinite;
+  }
+  .stage.flowing .edge-label.lit { opacity: 1; fill: var(--green); }
+  .stage.flowing .node.lit { opacity: 1; }
+  .stage.flowing .node.lit .box { stroke: var(--green); stroke-width: 2; }
+  @keyframes march { to { stroke-dashoffset: -14; } }
+  @media (prefers-reduced-motion: reduce) { .stage.flowing .edge.lit { animation: none; } }
+
+  .controls {
+    position: absolute; left: 14px; bottom: 14px; z-index: 4; display: flex; align-items: center; gap: 7px;
+    padding: 6px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
+    box-shadow: 0 8px 24px var(--shadow);
+  }
+  .zoom-btn { min-width: 30px; height: 28px; border-radius: 7px; font: 600 12px var(--mono); }
+  #zoomLevel { min-width: 48px; text-align: center; color: var(--muted); font: 10px var(--mono); }
+
+  .overlay {
+    position: absolute; z-index: 4; width: 330px; padding: 15px 16px 16px; border: 1px solid var(--line);
+    border-radius: 14px; background: var(--surface); box-shadow: 0 12px 34px var(--shadow);
+  }
+  .overlay[hidden] { display: none; }
+  .close {
+    position: absolute; right: 10px; top: 10px; width: 28px; height: 28px; border: 0; border-radius: 7px;
+    color: var(--muted); background: var(--surface-2); cursor: pointer; font-size: 16px;
+  }
+  .close:hover { color: var(--ink); }
+  #detail { right: 14px; bottom: 14px; }
+  #flowPanel { left: 14px; top: 14px; width: 360px; }
+  #legend { right: 14px; top: 14px; width: 210px; }
+  .eyebrow { color: var(--green); font: 600 9px var(--mono); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 5px; }
+  .overlay h2 { color: var(--ink); font: 500 19px/1.2 var(--serif); margin: 0 32px 4px 0; }
+  .overlay .meta { color: var(--muted); font: 10px/1.4 var(--mono); margin-bottom: 9px; }
+  .overlay p { margin: 0; font-size: 12.5px; line-height: 1.55; }
+  .overlay ol { margin: 8px 0 0 18px; padding: 0; }
+  .overlay li { font-size: 12px; line-height: 1.5; margin-bottom: 3px; }
+  .legend-item { display: flex; align-items: center; gap: 9px; color: var(--body); font-size: 11px; margin-top: 8px; }
+  .legend-swatch { width: 24px; height: 14px; border: 1.4px solid var(--line); border-radius: 4px; background: var(--surface); }
+  .legend-swatch.platform { background: var(--green-soft); border-color: var(--green); }
+  .legend-swatch.route { background: var(--blue-soft); border-color: var(--blue); }
+  .legend-swatch.logic { background: var(--amber-soft); border-color: var(--amber); }
+  .legend-swatch.store { background: var(--violet-soft); border-color: var(--violet); }
+
+  @media (max-width: 900px) {
+    .topbar { height: 106px; align-items: flex-start; flex-wrap: wrap; }
+    .title { min-width: calc(100% - 90px); }
+    .flows { order: 3; width: 100%; }
+    .stage { inset: 106px 0 0; }
+    #legend { display: none; }
+    .overlay { max-width: calc(100vw - 28px); }
+    #detail { width: min(330px, calc(100vw - 28px)); }
+  }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="title">
+    <h1>Tin học trẻ LAB — runtime</h1>
+    <div class="subtitle">vinext · Cloudflare Worker · OpenAI Sites identity · D1</div>
+  </div>
+  <nav class="flows" aria-label="Luồng hệ thống">
+    <button class="chip active" data-flow="all">Toàn cảnh</button>
+    <button class="chip" data-flow="library">Khám phá kho đề</button>
+    <button class="chip" data-flow="study">Chu trình học</button>
+    <button class="chip" data-flow="progress">Xem tiến độ</button>
+    <button class="chip" data-flow="feedback">Pilot feedback</button>
+    <button class="chip" data-flow="signin">Đăng nhập</button>
+  </nav>
+  <div class="spacer"></div>
+  <button class="icon-btn" id="legendToggle" aria-label="Mở chú giải" title="Chú giải">?</button>
+  <button class="icon-btn" id="themeToggle" aria-label="Đổi giao diện" title="Sáng / tối">◐</button>
+</header>
+
+<main class="stage" id="stage">
+<svg id="diagram" viewBox="0 0 1500 900" role="img" aria-labelledby="svgTitle svgDesc">
+  <title id="svgTitle">Kiến trúc runtime của Tin học trẻ LAB</title>
+  <desc id="svgDesc">Luồng từ trình duyệt qua OpenAI Sites, Cloudflare Worker, API routes, business logic và cơ sở dữ liệu D1.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path class="marker-muted" d="M0 0L10 5L0 10Z"/>
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path class="marker-blue" d="M0 0L10 5L0 10Z"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path class="marker-green" d="M0 0L10 5L0 10Z"/>
+    </marker>
+  </defs>
+  <style>
+    .marker-muted{fill:var(--muted)}.marker-blue{fill:var(--blue)}.marker-green{fill:var(--green)}
+  </style>
+
+  <g id="svg-content">
+    <g class="zone" id="zone-client">
+      <rect class="zone-bg" x="35" y="80" width="220" height="690" rx="18"/>
+      <text class="zone-title" x="55" y="110">Trải nghiệm</text>
+      <text class="zone-sub" x="55" y="128">người học + tài liệu công khai</text>
+    </g>
+    <g class="zone" id="zone-edge">
+      <rect class="zone-bg" x="295" y="80" width="260" height="690" rx="18"/>
+      <text class="zone-title" x="315" y="110">Edge platform</text>
+      <text class="zone-sub" x="315" y="128">OpenAI Sites + Cloudflare</text>
+    </g>
+    <g class="zone" id="zone-app">
+      <rect class="zone-bg" x="595" y="80" width="520" height="690" rx="18"/>
+      <text class="zone-title" x="615" y="110">Ứng dụng vinext / Next.js 16</text>
+      <text class="zone-sub" x="615" y="128">React Server Components + route handlers</text>
+    </g>
+    <g class="zone" id="zone-data">
+      <rect class="zone-bg" x="1155" y="80" width="310" height="690" rx="18"/>
+      <text class="zone-title" x="1175" y="110">Dữ liệu</text>
+      <text class="zone-sub" x="1175" y="128">Drizzle ORM → Cloudflare D1</text>
+    </g>
+
+    <!-- edges first -->
+    <path class="edge" id="e-browser-sites" d="M225 208C280 208 292 208 335 208"/>
+    <text class="edge-label" data-edge="e-browser-sites" x="280" y="194" text-anchor="middle">HTTPS</text>
+    <path class="edge" id="e-sites-worker" d="M515 208C558 208 578 208 625 208"/>
+    <text class="edge-label" data-edge="e-sites-worker" x="570" y="194" text-anchor="middle">request</text>
+    <path class="edge" id="e-auth-sites" d="M145 310C218 310 252 320 335 320"/>
+    <text class="edge-label" data-edge="e-auth-sites" x="265" y="303" text-anchor="middle">SIWC</text>
+    <path class="edge" id="e-sites-identity" d="M425 355L425 420C425 445 558 445 625 445"/>
+    <text class="edge-label" data-edge="e-sites-identity" x="520" y="433" text-anchor="middle">identity headers</text>
+    <path class="edge" id="e-worker-ui" d="M725 240L725 285"/>
+    <path class="edge" id="e-worker-routes" d="M815 240C835 260 845 270 845 285"/>
+    <path class="edge" id="e-worker-image" d="M905 208C965 208 970 310 970 350"/>
+    <text class="edge-label" data-edge="e-worker-image" x="975" y="286">/_vinext/image</text>
+    <path class="edge" id="e-ui-library" d="M685 345C700 385 835 385 855 420"/>
+    <path class="edge" id="e-ui-learning" d="M745 345C780 375 980 382 1002 420"/>
+    <path class="edge" id="e-ui-progress" d="M790 345C800 430 850 490 865 540"/>
+    <path class="edge" id="e-ui-feedback" d="M835 345C890 425 990 475 1005 540"/>
+    <path class="edge" id="e-identity-library" d="M790 440L805 440"/>
+    <path class="edge" id="e-identity-learning" d="M790 452C850 500 910 500 945 465"/>
+    <path class="edge" id="e-identity-progress" d="M700 485C700 570 760 572 805 572"/>
+    <path class="edge" id="e-identity-feedback" d="M735 485C770 625 900 625 945 585"/>
+    <text class="edge-label" data-edge="e-identity-library" x="797" y="428" text-anchor="middle">learner.id</text>
+    <path class="edge data" id="e-library-db" d="M930 440C1020 430 1100 370 1185 350"/>
+    <path class="edge data" id="e-learning-db" d="M1070 440C1115 420 1140 385 1185 365"/>
+    <path class="edge data" id="e-progress-db" d="M930 572C1030 570 1110 420 1185 380"/>
+    <path class="edge data" id="e-feedback-db" d="M1070 572C1120 540 1140 430 1185 392"/>
+    <path class="edge data" id="e-health-db" d="M1070 662C1140 600 1145 450 1185 398"/>
+    <path class="edge data" id="e-orm-d1" d="M1310 400L1310 505"/>
+    <text class="edge-label" data-edge="e-orm-d1" x="1323" y="456">SQL</text>
+    <path class="edge external" id="e-source-library" d="M225 640C330 640 410 700 645 700C850 700 1055 620 1185 570"/>
+    <text class="edge-label" data-edge="e-source-library" x="660" y="716" text-anchor="middle">curated seed metadata + official links</text>
+    <path class="edge data" id="e-d1-groups" d="M1310 565L1310 625"/>
+
+    <!-- experience -->
+    <g class="node" data-key="browser" tabindex="0">
+      <rect class="box" x="65" y="165" width="160" height="85" rx="12"/>
+      <path class="mini-icon" d="M85 186h24v17H85zM85 191h24M90 187v3M95 187v3"/>
+      <text class="node-title" x="120" y="190">Trình duyệt</text>
+      <text class="node-meta" x="85" y="220">React 19 UI</text>
+      <text class="node-meta" x="85" y="236">desktop + mobile</text>
+    </g>
+    <g class="node" data-key="signin" tabindex="0">
+      <rect class="box" x="65" y="280" width="160" height="80" rx="12"/>
+      <text class="node-tag" x="85" y="302">Identity</text>
+      <text class="node-title" x="85" y="324">Sign in with ChatGPT</text>
+      <text class="node-meta" x="85" y="343">platform-owned flow</text>
+    </g>
+    <g class="node external" data-key="sources" tabindex="0">
+      <rect class="box" x="65" y="590" width="160" height="100" rx="12"/>
+      <text class="node-tag" x="85" y="614">External</text>
+      <text class="node-title" x="85" y="638">Nguồn đề chính thức</text>
+      <text class="node-meta" x="85" y="660">URL + provenance</text>
+      <text class="node-meta" x="85" y="677">link-only policy</text>
+    </g>
+
+    <!-- edge -->
+    <g class="node platform" data-key="sites" tabindex="0">
+      <rect class="box" x="335" y="165" width="180" height="90" rx="12"/>
+      <text class="node-tag" x="355" y="188">OpenAI Sites</text>
+      <text class="node-title" x="355" y="212">Dispatch + access</text>
+      <text class="node-meta" x="355" y="233">TLS · hosting · auth paths</text>
+    </g>
+    <g class="node platform" data-key="headers" tabindex="0">
+      <rect class="box" x="335" y="285" width="180" height="70" rx="12"/>
+      <text class="node-title" x="355" y="313">Identity injection</text>
+      <text class="node-meta" x="355" y="334">oai-authenticated-user-*</text>
+    </g>
+    <g class="node platform" data-key="cloudflare" tabindex="0">
+      <rect class="box" x="335" y="420" width="180" height="95" rx="12"/>
+      <text class="node-tag" x="355" y="443">Cloudflare</text>
+      <text class="node-title" x="355" y="467">Worker runtime</text>
+      <text class="node-meta" x="355" y="488">ASSETS · IMAGES · DB</text>
+      <text class="node-meta" x="355" y="504">nodejs_compat</text>
+    </g>
+
+    <!-- app -->
+    <g class="node" data-key="router" tabindex="0">
+      <rect class="box" x="625" y="165" width="380" height="75" rx="12"/>
+      <text class="node-tag" x="645" y="188">worker/index.ts</text>
+      <text class="node-title" x="645" y="212">vinext App Router handler</text>
+      <text class="node-meta" x="850" y="212">fetch(request, env, ctx)</text>
+    </g>
+    <g class="node" data-key="ui" tabindex="0">
+      <rect class="box" x="625" y="285" width="240" height="60" rx="12"/>
+      <text class="node-title" x="645" y="311">Server + client UI</text>
+      <text class="node-meta" x="645" y="331">app/page.tsx · app/docs</text>
+    </g>
+    <g class="node" data-key="images" tabindex="0">
+      <rect class="box" x="900" y="350" width="175" height="60" rx="12"/>
+      <text class="node-title" x="920" y="376">Image optimizer</text>
+      <text class="node-meta" x="920" y="396">Cloudflare Images</text>
+    </g>
+    <g class="node logic" data-key="identity" tabindex="0">
+      <rect class="box" x="625" y="420" width="165" height="65" rx="12"/>
+      <text class="node-tag" x="645" y="442">Auth boundary</text>
+      <text class="node-title" x="645" y="465">resolveLearner()</text>
+    </g>
+    <g class="node route" data-key="library" tabindex="0">
+      <rect class="box" x="810" y="420" width="120" height="65" rx="12"/>
+      <text class="node-tag" x="828" y="442">GET</text>
+      <text class="node-title" x="828" y="465">/api/library</text>
+    </g>
+    <g class="node route" data-key="learning" tabindex="0">
+      <rect class="box" x="945" y="420" width="125" height="65" rx="12"/>
+      <text class="node-tag" x="963" y="442">GET · POST</text>
+      <text class="node-title" x="963" y="465">/api/learning</text>
+    </g>
+    <g class="node route" data-key="progress" tabindex="0">
+      <rect class="box" x="810" y="540" width="120" height="65" rx="12"/>
+      <text class="node-tag" x="828" y="562">GET</text>
+      <text class="node-title" x="828" y="585">/api/progress</text>
+    </g>
+    <g class="node route" data-key="feedback" tabindex="0">
+      <rect class="box" x="945" y="540" width="125" height="65" rx="12"/>
+      <text class="node-tag" x="963" y="562">GET · POST</text>
+      <text class="node-title" x="963" y="585">/api/pilot</text>
+    </g>
+    <g class="node route" data-key="public" tabindex="0">
+      <rect class="box" x="810" y="630" width="260" height="65" rx="12"/>
+      <text class="node-tag" x="830" y="652">Public interfaces</text>
+      <text class="node-title" x="830" y="675">/health · /docs · /openapi.json</text>
+    </g>
+
+    <!-- data -->
+    <g class="node store" data-key="drizzle" tabindex="0">
+      <rect class="box" x="1185" y="325" width="250" height="75" rx="12"/>
+      <text class="node-tag" x="1205" y="348">Data access</text>
+      <text class="node-title" x="1205" y="372">Drizzle ORM</text>
+      <text class="node-meta" x="1205" y="389">getDb() · typed SQLite schema</text>
+    </g>
+    <g class="node store" data-key="d1" tabindex="0">
+      <rect class="box" x="1185" y="505" width="250" height="60" rx="12"/>
+      <text class="node-title" x="1205" y="532">Cloudflare D1</text>
+      <text class="node-meta" x="1205" y="551">binding: DB</text>
+    </g>
+    <g class="node store" data-key="schema" tabindex="0">
+      <rect class="box" x="1185" y="625" width="250" height="95" rx="12"/>
+      <text class="node-tag" x="1205" y="648">8 tables</text>
+      <text class="node-title" x="1205" y="671">Nội dung + chu trình học</text>
+      <text class="node-meta" x="1205" y="692">sources · exams · problems · learners</text>
+      <text class="node-meta" x="1205" y="708">sessions · attempts · reflections · pilot</text>
+    </g>
+  </g>
+</svg>
+
+<div class="controls" aria-label="Điều khiển sơ đồ">
+  <button class="zoom-btn" id="zoomOut" aria-label="Thu nhỏ">−</button>
+  <span id="zoomLevel">100%</span>
+  <button class="zoom-btn" id="zoomIn" aria-label="Phóng to">+</button>
+  <button class="zoom-btn" id="resetView">100%</button>
+</div>
+
+<aside class="overlay" id="detail" hidden>
+  <button class="close" aria-label="Đóng chi tiết">×</button>
+  <div class="eyebrow" id="detailType">Thành phần</div>
+  <h2 id="detailTitle"></h2>
+  <div class="meta" id="detailMeta"></div>
+  <p id="detailText"></p>
+</aside>
+
+<aside class="overlay" id="flowPanel" hidden>
+  <button class="close" aria-label="Đóng luồng">×</button>
+  <div class="eyebrow">Luồng đang phát</div>
+  <h2 id="flowTitle"></h2>
+  <ol id="flowSteps"></ol>
+</aside>
+
+<aside class="overlay" id="legend">
+  <button class="close" aria-label="Đóng chú giải">×</button>
+  <div class="eyebrow">Chú giải</div>
+  <div class="legend-item"><span class="legend-swatch platform"></span>Nền tảng / runtime</div>
+  <div class="legend-item"><span class="legend-swatch route"></span>HTTP route</div>
+  <div class="legend-item"><span class="legend-swatch logic"></span>Logic / auth boundary</div>
+  <div class="legend-item"><span class="legend-swatch store"></span>Data access / storage</div>
+</aside>
+</main>
+
+<script>
+  const details = {
+    browser: ["Trải nghiệm", "Trình duyệt", "React 19 · responsive UI", "Trang chính phục vụ chu trình khám phá đề, luyện tập, phản tư và xem tiến độ. Trang tài liệu API nằm cùng ứng dụng."],
+    signin: ["Identity", "Sign in with ChatGPT", "reserved platform routes", "Dispatch sở hữu /signin-with-chatgpt, /signout-with-chatgpt và /callback. Ứng dụng không tự cài OAuth route."],
+    sources: ["External boundary", "Nguồn đề chính thức", "content_sources · exam_papers · problems", "D1 lưu provenance, metadata và liên kết chính thức. Mô hình usage_policy mặc định là link_only, không biến nguồn ngoài thành dịch vụ runtime."],
+    sites: ["Platform", "OpenAI Sites", ".openai/hosting.json", "Lớp hosting và access policy đứng trước Worker, quản lý luồng đăng nhập và chuyển tiếp identity đã xác thực."],
+    headers: ["Trust boundary", "Identity headers", "email + optional encoded full name", "Email được chuẩn hoá; tên đầy đủ chỉ được giải mã khi header encoding là percent-encoded-utf-8."],
+    cloudflare: ["Runtime", "Cloudflare Worker", "ASSETS · IMAGES · DB", "Một Worker nhận request, tối ưu ảnh tại /_vinext/image, rồi chuyển phần còn lại cho vinext App Router."],
+    router: ["Application", "vinext App Router", "worker/index.ts", "vinext chạy Next.js App Router và React Server Components trong Cloudflare Worker."],
+    ui: ["Presentation", "Server + client UI", "app/page.tsx · app/docs/page.tsx", "UI và tài liệu API được render từ cùng deployment; request dữ liệu đi qua các route handlers bên dưới."],
+    images: ["Media", "Image optimizer", "handleImageOptimization()", "Ảnh raster được resize và định dạng bằng binding IMAGES; static assets được đọc qua ASSETS."],
+    identity: ["Auth boundary", "resolveLearner()", "lib/auth/current-learner.ts", "Mọi API dữ liệu yêu cầu identity. Learner được tìm theo email hoặc tạo đúng một lần khi truy cập lần đầu."],
+    library: ["Route", "/api/library", "filtered read · authenticated", "Đọc nguồn, kỳ thi, bài tập, thống kê và các phiên học gần đây; hỗ trợ lọc theo năm, bảng, vòng, chủ đề và nguồn."],
+    learning: ["Route", "/api/learning", "read + command endpoint", "Điều phối bốn lệnh: start_session, set_status, record_attempt và save_reflection; kiểm tra quyền sở hữu phiên học."],
+    progress: ["Route", "/api/progress", "derived analytics", "Tổng hợp số phiên, lần làm, thời gian học, lỗi thường gặp, lịch ôn và sức mạnh theo chủ đề trực tiếp từ D1."],
+    feedback: ["Route", "/api/pilot-feedback", "aggregate + upsert", "Mỗi learner có một feedback pilot. POST cập nhật bản ghi; GET trả thống kê tổng hợp."],
+    public: ["Public surface", "Health + docs + OpenAPI", "no learner identity required", "Health kiểm tra D1; OpenAPI 3.1 là hợp đồng máy đọc; /docs là tài liệu cho người dùng."],
+    drizzle: ["Data access", "Drizzle ORM", "drizzle-orm/d1", "Schema TypeScript tạo truy vấn typed. getDb() lấy binding DB từ cloudflare:workers."],
+    d1: ["Persistence", "Cloudflare D1", "SQLite-compatible edge database", "Nguồn dữ liệu runtime duy nhất cho hồ sơ learner, catalog đề, chu trình học và pilot."],
+    schema: ["Schema", "8 bảng nghiệp vụ", "db/schema.ts · 3 migrations", "Quan hệ dùng foreign keys, cascade hoặc set null có chủ đích; unique indexes bảo vệ email và feedback mỗi learner."],
+  };
+
+  const flows = {
+    library: {
+      title: "Khám phá kho đề",
+      nodes: ["browser","sites","cloudflare","router","ui","headers","identity","library","drizzle","d1","schema","sources"],
+      edges: ["e-browser-sites","e-sites-worker","e-worker-ui","e-ui-library","e-auth-sites","e-sites-identity","e-identity-library","e-library-db","e-orm-d1","e-d1-groups","e-source-library"],
+      steps: ["Browser gửi bộ lọc kho đề.", "Sites chuyển identity đã xác thực.", "Route dựng truy vấn Drizzle có filter.", "D1 trả catalog, provenance và phiên học gần đây."]
+    },
+    study: {
+      title: "Chu trình học",
+      nodes: ["browser","sites","cloudflare","router","ui","headers","identity","learning","drizzle","d1","schema"],
+      edges: ["e-browser-sites","e-sites-worker","e-worker-ui","e-ui-learning","e-auth-sites","e-sites-identity","e-identity-learning","e-learning-db","e-orm-d1","e-d1-groups"],
+      steps: ["Learner bắt đầu hoặc cập nhật phiên.", "Identity được resolve thành learner.id.", "Command được validate và kiểm tra ownership.", "Session, attempt hoặc reflection được ghi vào D1."]
+    },
+    progress: {
+      title: "Xem tiến độ",
+      nodes: ["browser","sites","cloudflare","router","ui","headers","identity","progress","drizzle","d1","schema"],
+      edges: ["e-browser-sites","e-sites-worker","e-worker-ui","e-ui-progress","e-auth-sites","e-sites-identity","e-identity-progress","e-progress-db","e-orm-d1","e-d1-groups"],
+      steps: ["UI yêu cầu dashboard của learner.", "Route tổng hợp session và attempt.", "Topic strength được tính từ AC rate + confidence.", "Kết quả trả về cùng lỗi và lịch ôn tiếp theo."]
+    },
+    feedback: {
+      title: "Pilot feedback",
+      nodes: ["browser","sites","cloudflare","router","ui","headers","identity","feedback","drizzle","d1","schema"],
+      edges: ["e-browser-sites","e-sites-worker","e-worker-ui","e-ui-feedback","e-auth-sites","e-sites-identity","e-identity-feedback","e-feedback-db","e-orm-d1","e-d1-groups"],
+      steps: ["Learner gửi rating và thời lượng.", "Payload được giới hạn và chuẩn hoá.", "Feedback được upsert theo learner.", "GET trả số người tham gia và chỉ số tổng hợp."]
+    },
+    signin: {
+      title: "Đăng nhập và tạo learner",
+      nodes: ["browser","signin","sites","headers","cloudflare","router","identity","drizzle","d1","schema"],
+      edges: ["e-auth-sites","e-sites-identity","e-sites-worker","e-identity-library","e-library-db","e-orm-d1","e-d1-groups"],
+      steps: ["Người dùng đi qua route đăng nhập do Dispatch sở hữu.", "Sites chèn email và optional full name.", "Ứng dụng tìm learner bằng email chuẩn hoá.", "Nếu chưa có, learner được tạo an toàn trước race."]
+    }
+  };
+
+  const stage = document.getElementById("stage");
+  const svg = document.getElementById("diagram");
+  const content = document.getElementById("svg-content");
+  const detail = document.getElementById("detail");
+  const flowPanel = document.getElementById("flowPanel");
+  const legend = document.getElementById("legend");
+  let view = { x: 0, y: 0, scale: 1 };
+  let drag = null;
+  let dragged = false;
+
+  function applyView() {
+    content.setAttribute("transform", `translate(${view.x} ${view.y}) scale(${view.scale})`);
+    document.getElementById("zoomLevel").textContent = `${Math.round(view.scale * 100)}%`;
+  }
+  function zoomAt(clientX, clientY, factor) {
+    const rect = svg.getBoundingClientRect();
+    const sx = (clientX - rect.left) * 1500 / rect.width;
+    const sy = (clientY - rect.top) * 900 / rect.height;
+    const old = view.scale;
+    const next = Math.max(.45, Math.min(2.5, old * factor));
+    const worldX = (sx - view.x) / old;
+    const worldY = (sy - view.y) / old;
+    view.x = sx - worldX * next;
+    view.y = sy - worldY * next;
+    view.scale = next;
+    applyView();
+  }
+  svg.addEventListener("wheel", e => {
+    e.preventDefault();
+    zoomAt(e.clientX, e.clientY, e.deltaY < 0 ? 1.12 : .89);
+  }, { passive: false });
+  svg.addEventListener("pointerdown", e => {
+    if (e.button !== 0) return;
+    drag = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y };
+    dragged = false;
+    stage.classList.add("dragging");
+    svg.setPointerCapture(e.pointerId);
+  });
+  svg.addEventListener("pointermove", e => {
+    if (!drag) return;
+    const dx = (e.clientX - drag.x) * 1500 / svg.getBoundingClientRect().width;
+    const dy = (e.clientY - drag.y) * 900 / svg.getBoundingClientRect().height;
+    if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 5) dragged = true;
+    view.x = drag.vx + dx;
+    view.y = drag.vy + dy;
+    applyView();
+  });
+  function endDrag(e) {
+    if (!drag) return;
+    drag = null;
+    stage.classList.remove("dragging");
+    if (svg.hasPointerCapture(e.pointerId)) svg.releasePointerCapture(e.pointerId);
+    if (dragged) {
+      const stop = ev => { ev.stopPropagation(); dragged = false; };
+      document.addEventListener("click", stop, { capture: true, once: true });
+    }
+  }
+  svg.addEventListener("pointerup", endDrag);
+  svg.addEventListener("pointercancel", endDrag);
+  document.getElementById("zoomIn").onclick = () => zoomAt(innerWidth / 2, innerHeight / 2, 1.18);
+  document.getElementById("zoomOut").onclick = () => zoomAt(innerWidth / 2, innerHeight / 2, .85);
+  document.getElementById("resetView").onclick = () => { view = { x: 0, y: 0, scale: 1 }; applyView(); };
+
+  function showDetail(node) {
+    document.querySelectorAll(".node.selected").forEach(n => n.classList.remove("selected"));
+    node.classList.add("selected");
+    const [type, title, meta, text] = details[node.dataset.key];
+    document.getElementById("detailType").textContent = type;
+    document.getElementById("detailTitle").textContent = title;
+    document.getElementById("detailMeta").textContent = meta;
+    document.getElementById("detailText").textContent = text;
+    detail.hidden = false;
+  }
+  document.querySelectorAll(".node").forEach(node => {
+    node.addEventListener("click", () => showDetail(node));
+    node.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); showDetail(node); }
+    });
+  });
+
+  function setFlow(key) {
+    document.querySelectorAll(".chip").forEach(c => c.classList.toggle("active", c.dataset.flow === key));
+    document.querySelectorAll(".node,.edge,.edge-label").forEach(el => el.classList.remove("lit"));
+    if (key === "all") {
+      stage.classList.remove("flowing");
+      flowPanel.hidden = true;
+      return;
+    }
+    const flow = flows[key];
+    stage.classList.add("flowing");
+    flow.nodes.forEach(id => document.querySelector(`.node[data-key="${id}"]`)?.classList.add("lit"));
+    flow.edges.forEach(id => {
+      document.getElementById(id)?.classList.add("lit");
+      document.querySelectorAll(`.edge-label[data-edge="${id}"]`).forEach(el => el.classList.add("lit"));
+    });
+    document.getElementById("flowTitle").textContent = flow.title;
+    document.getElementById("flowSteps").innerHTML = flow.steps.map(step => `<li>${step}</li>`).join("");
+    flowPanel.hidden = false;
+  }
+  document.querySelectorAll(".chip").forEach(chip => chip.onclick = () => setFlow(chip.dataset.flow));
+
+  document.querySelector("#detail .close").onclick = () => { detail.hidden = true; document.querySelectorAll(".node.selected").forEach(n => n.classList.remove("selected")); };
+  document.querySelector("#flowPanel .close").onclick = () => { flowPanel.hidden = true; };
+  document.querySelector("#legend .close").onclick = () => { legend.hidden = true; };
+  document.getElementById("legendToggle").onclick = () => { legend.hidden = false; };
+  document.getElementById("themeToggle").onclick = () => {
+    const dark = document.documentElement.classList.toggle("dark");
+    localStorage.setItem("tinhoctre-diagram-theme", dark ? "dark" : "light");
+  };
+  applyView();
+</script>
+</body>
+</html>
