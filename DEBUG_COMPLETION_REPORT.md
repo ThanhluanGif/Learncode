@@ -24,6 +24,7 @@ Các lỗi local và artifact đã sửa có bằng chứng đỏ -> xanh. Live 
 | DBG-013 | ERR-018 hollow done-evidence | Localhost/local tests được ghi thành live proof | C-001–C-004 trả về todo; report invalidated | OPEN |
 | DBG-014 | ERR-019 catalog coverage | 2022+B trả zero exams; chỉ hai seasons | Strict verifier đã đỏ đúng; chờ catalog fix | OPEN |
 | DBG-015 | ERR-020 QA count query | `no such table: sources` | Đổi sang `content_sources`; counts 3/2/9 | DONE |
+| DBG-016 | ERR-021 insecure WebSocket contract | Security test FAIL tại BA workflow | Hai endpoint dùng `wss`; focused test PASS | DONE |
 
 ## Quy tắc ghi nhận
 
@@ -66,3 +67,4 @@ Một lỗi chỉ được chuyển sang `DONE` khi có đủ:
 - `DBG-009` live recheck (`2026-07-13 23:05 +07`): Sites version 6 vẫn 12/12 platform HTML 500 ở anonymous/bypass-owner; access vẫn `custom`.
 - `DBG-015` (`2026-07-13 23:16 +07`): lệnh đếm ad-hoc dùng nhầm `sources`; đối chiếu schema và chạy lại `content_sources` thành công, xác nhận counts 3/2/9 cùng hai exam rows drift.
 - `DBG-014` retest (`2026-07-13 23:17 +07`): lint/build PASS, tests 12/12, Flow consistency 7/7 và C-001–C-004 check PASS ở `todo`; exact-bundle strict verifier vẫn RED đúng tại official 2022 B. Không deploy artifact chưa đạt gate.
+- `DBG-016` (`2026-07-13 23:22 +07`): thêm regression scan trước khi sửa và tái hiện FAIL 0/1 tại `docs/BA_WORKFLOW.md`; đổi hai endpoint production sang `wss://`, thêm quy tắc chống hạ cấp; focused PASS 1/1, full tests 13/13, lint/build/Flow checks PASS và repository scan sạch.

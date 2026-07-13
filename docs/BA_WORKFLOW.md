@@ -633,7 +633,7 @@ X-Request-ID: 550e8400-e29b-41d4-a716-446655440000
     "status": "QUEUED",
     "created_at": "2026-07-13T22:30:45+07:00",
     "estimated_wait": 5,
-    "websocket_channel": "ws://api.tinhoctre.edu.vn/ws/submissions/sub_20260713_223045_abc123"
+    "websocket_channel": "wss://api.tinhoctre.edu.vn/ws/submissions/sub_20260713_223045_abc123"
   },
   "meta": {
     "request_id": "550e8400-e29b-41d4-a716-446655440000",
@@ -646,8 +646,12 @@ X-Request-ID: 550e8400-e29b-41d4-a716-446655440000
 #### WebSocket — Realtime Judging Updates
 
 ```
-Channel: ws://api.tinhoctre.edu.vn/ws/submissions/{submission_id}
+Channel: wss://api.tinhoctre.edu.vn/ws/submissions/{submission_id}
 ```
+
+**Yêu cầu bảo mật:** API production chỉ được phát hành endpoint `wss`. Client phải từ
+chối endpoint WebSocket không mã hóa thay vì tự động hạ cấp kết nối; token xác thực và
+thông tin bài nộp không được truyền qua kênh plaintext.
 
 **Message format:**
 

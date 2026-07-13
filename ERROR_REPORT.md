@@ -24,6 +24,7 @@
 | ERR-018 | P0 | OPEN | C-001–C-004 bị đánh done bằng local evidence thay cho world-state live |
 | ERR-019 | P0 | OPEN | Catalog 2022+B trả zero exams và chưa có đủ mười mùa hoàn chỉnh |
 | ERR-020 | P3 | DONE | Truy vấn đếm QA dùng nhầm bảng `sources` thay vì `content_sources` |
+| ERR-021 | P0 | DONE | Contract BA công bố WebSocket production không mã hóa cho dữ liệu submission |
 
 ## Chi tiết
 
@@ -207,3 +208,12 @@
 - Phát hiện: 2026-07-13 23:16 +07 sau khi migrations 3/3 và seed đã chạy thành công, câu diagnostic `COUNT(*) FROM sources` trả `no such table`.
 - Nguyên nhân: schema thật đặt tên `content_sources`; lỗi chỉ nằm trong lệnh kiểm tra ad-hoc, không nằm trong migration hay ứng dụng.
 - Sửa và bằng chứng: chạy lại trên cùng fresh persist với `content_sources`, nhận 3 sources, 2 exams và 9 problems; truy vấn chi tiết hai exam rows thành công.
+
+### ERR-021 - WebSocket contract không mã hóa
+
+- Phát hiện: Semgrep báo source–sink không có sanitizer tại `websocket_channel` và channel realtime judging trong `docs/BA_WORKFLOW.md`.
+- Rủi ro: một client triển khai đúng theo contract cũ có thể truyền token, submission id và kết quả chấm qua kênh plaintext, cho phép nghe lén hoặc sửa đổi trên đường truyền.
+- Bằng chứng đỏ: `node --test tests/secure-websocket.test.mjs` FAIL 0/1 và chỉ ra `docs/BA_WORKFLOW.md`.
+- Sửa: đổi cả response example và channel template sang `wss://`; thêm yêu cầu production chỉ phát hành endpoint mã hóa và client từ chối hạ cấp.
+- Bằng chứng xanh: focused test PASS 1/1, full tests PASS 13/13, lint/build PASS và quét toàn repository không còn endpoint WebSocket plaintext.
+- Phạm vi: hiện repository chưa có runtime WebSocket implementation; bản vá đóng lỗ hổng trong contract/source mẫu, không tuyên bố realtime judge đã deploy.

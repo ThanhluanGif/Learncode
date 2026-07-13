@@ -168,6 +168,14 @@
 - Exact production bundle trả OpenAPI `200`, năm protected route thiếu auth đều `401`, authenticated `/api/me` và library đều `200`. Strict verifier dừng đúng tại assertion “Expected the official 2022 B exam metadata”.
 - Không deploy code provisional vì C-002/C-004 đang đỏ và C-001 chưa có live proof; tránh tạo thêm version không thể qua gate.
 
+### 2026-07-13 23:22 +07 - Security hotfix cho WebSocket contract
+
+- Semgrep finding được tái hiện bằng regression test mới: test FAIL và định danh `docs/BA_WORKFLOW.md` là tài liệu duy nhất còn công bố WebSocket plaintext.
+- Hai endpoint ví dụ submission/realtime đã đổi sang `wss://`; contract bổ sung yêu cầu production chỉ phát hành kết nối mã hóa và client phải từ chối hạ cấp.
+- Focused security test PASS 1/1; quét repository không còn chuỗi endpoint WebSocket plaintext. Đây là hotfix tài liệu/security test, không phải bằng chứng runtime realtime-judge đã được triển khai.
+- Full QA sau sửa: lint PASS, production build PASS, tests PASS 13/13; Flow consistency PASS 7/7 FR và C-001 mechanical check PASS ở trạng thái `todo`.
+- C-001 vẫn in-flight và C-002/C-004 vẫn đỏ ở các gate độc lập; security hotfix không làm tròn trạng thái card.
+
 ## Commit theo chặng
 
 | Commit | Nội dung | QA |
@@ -189,3 +197,4 @@
 | `C-004-PROVISIONAL` | Contract smoke | Local-only report invalidated; strict catalog assertion đang đỏ |
 | `C-005-HALTED` | UI mock chưa theo dõi | Không tiếp tục khi dependency C-004 chưa đạt |
 | `QA-20260713-2317` | QA lại sau merge docs/report | lint/build PASS; tests 12/12; Flow consistency/check PASS; strict 2022+B RED đúng |
+| `SEC-20260713-2322` | Loại WebSocket plaintext khỏi contract | focused RED -> PASS; lint/build PASS; tests 13/13; scan sạch |
