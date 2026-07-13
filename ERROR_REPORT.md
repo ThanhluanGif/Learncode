@@ -9,6 +9,7 @@
 | ERR-003 | P0 | OPEN | API gắn cứng mọi dữ liệu học tập vào learner `1` |
 | ERR-004 | P1 | OPEN | Chưa có hợp đồng API được phục vụ tại runtime |
 | ERR-005 | P1 | OPEN | UI trộn dữ liệu tĩnh với dữ liệu D1 |
+| ERR-006 | P2 | DONE | Gọi sai đường dẫn Flow runner khi bắt đầu Research |
 
 ## Chi tiết
 
@@ -51,3 +52,12 @@
 - Tác động: người học có thể hiểu nhầm thống kê hoặc đề tĩnh là dữ liệu tài khoản thật.
 - Hướng xử lý: gắn nhãn demo rõ ràng hoặc chuyển các surface sang dữ liệu API.
 - Tiêu chí đóng: mọi chỉ số người dùng lấy từ API hoặc được ghi rõ là minh họa.
+
+### ERR-006 - Sai đường dẫn Flow runner
+
+- Phát hiện: 2026-07-13 khi bắt đầu Research.
+- Trước sửa: `zsh: no such file or directory: /Users/admin/.codex/skills/flow/scripts/flow.sh`.
+- Nguyên nhân: dùng nhầm thư mục `scripts` thay cho `runner`.
+- Sửa: xác định runner thực tại `/Users/admin/.codex/skills/flow/runner/flow.sh` và gọi bằng `bash`.
+- Sau sửa: `flow recall` thoát mã `0`, entropy `0/100`, không có nợ mở.
+- Trạng thái: đóng trong cùng vòng thao tác, không có thay đổi mã ứng dụng.

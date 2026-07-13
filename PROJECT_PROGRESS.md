@@ -14,8 +14,8 @@
 | Khởi tạo Flow | DONE | Flow mode `work`, project type `web` |
 | Đánh giá codebase hiện tại | DONE | Mechanical gate PASS sau xác nhận của chủ dự án |
 | Idea | DONE | Mechanical + semantic gate PASS |
-| Research | IN_PROGRESS | Stage 01 đã mở |
-| Scope | TODO | Chưa mở gate |
+| Research | DONE | Mechanical + semantic gate PASS; có 3 đối thủ, 3 phản hồi thật và GTM cụ thể |
+| Scope | IN_PROGRESS | Stage 02 đã mở; đang chuẩn bị cổng quyết định GO/KILL |
 | PRD | TODO | Chưa mở gate |
 | ADR | TODO | Chưa mở gate |
 | Contract | TODO | Chưa mở gate |
@@ -35,7 +35,10 @@
 - QA baseline: lint PASS, build PASS, test FAIL 0/2.
 - Mechanical assessment gate đã chạy và dừng đúng tại yêu cầu xác nhận của con người (`flow/00-inspect.md:14`).
 - Chủ dự án đã xác nhận assessment; mechanical gate PASS.
-- Bước tiếp theo: chủ dự án xác nhận nội dung `flow/00-inspect.md`; sau đó chạy gate và tiếp tục Idea -> Research -> Scope.
+- Idea đã định vị sản phẩm là lớp học tập quanh kho đề chính thức và Online Judge ngoài.
+- Research đã mở trực tiếp VNOJ, HNOJ, LQDOJ; ghi nhận ba phản hồi người học, giá tham chiếu và kênh thử nghiệm VNOI.
+- Stage 01 qua mechanical gate và semantic challenge; Scope được mở để chốt v1/cut list.
+- Bước tiếp theo: soạn Scope, trình chủ dự án duyệt gate bắt buộc trước PRD.
 
 ## Commit theo chặng
 
@@ -44,3 +47,4 @@
 | `FLOW-000` | Khởi tạo hồ sơ Flow và baseline | lint PASS; build PASS; test FAIL đã ghi nhận |
 | `FLOW-001` | Đóng gate brownfield assessment | `flow assess` PASS |
 | `FLOW-002` | Chốt ý tưởng sản phẩm | Stage 00 mechanical + semantic PASS |
+| `FLOW-003` | Nghiên cứu thị trường và hành vi học | Stage 01 mechanical + semantic PASS |
