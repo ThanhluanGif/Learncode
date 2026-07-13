@@ -3,12 +3,15 @@ import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqli
 
 export const learners = sqliteTable("learners", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  email: text("email"),
   displayName: text("display_name").notNull(),
   division: text("division").notNull().default("B"),
   schoolLevel: text("school_level").notNull().default("THCS"),
   xp: integer("xp").notNull().default(0),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-});
+}, (table) => [
+  uniqueIndex("learners_email_unique").on(table.email),
+]);
 
 export const contentSources = sqliteTable("content_sources", {
   id: integer("id").primaryKey({ autoIncrement: true }),

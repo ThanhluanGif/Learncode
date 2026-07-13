@@ -19,7 +19,7 @@
 | PRD | DONE | FR1–FR7, pain mapping và numeric success metric PASS |
 | ADR | DONE | Mechanical + semantic gate PASS; 7 quyết định đã lưu vào harness |
 | Contract | DONE | Stage 05 mechanical + semantic PASS; path-resolution PASS |
-| Build cards | IN_PROGRESS | 6/6 cards valid; C-001 buildable, C-002–C-006 dependency-gated |
+| Build cards | IN_PROGRESS | C-001 local implementation + QA PASS; chờ deploy/live evidence |
 | Review | TODO | Chưa bắt đầu |
 | Deploy | TODO | Chưa bắt đầu chu kỳ mới |
 | Verify live | TODO | Chưa bắt đầu |
@@ -61,6 +61,14 @@
 - Cross-artifact consistency PASS: 7/7 FR được card claim và contract phục vụ; không có scope/cut-list/terminology drift được phát hiện.
 - `flow ready`: chỉ C-001 buildable; các card sau bị chặn đúng theo dependency chain.
 
+### 2026-07-13 - C-001 local implementation
+
+- Thêm identity resolver từ header Sites, unique learner email, `/api/me`, `/api/health`, `/openapi.json` và `/docs`.
+- Thay test starter lỗi thời bằng 4 product tests: auth required, two-identity separation, 10 contract interfaces và migration identity.
+- Migration tương thích cả D1 fresh lẫn brownfield; hai môi trường đều áp dụng `0000` + `0001` thành công.
+- QA cuối local: lint PASS; build PASS; test PASS 4/4; Flow design mechanical + semantic PASS; local HTTP health/auth/OpenAPI/docs PASS.
+- Bước tiếp theo: commit implementation, publish private, lấy live evidence rồi đóng C-001.
+
 ## Commit theo chặng
 
 | Commit | Nội dung | QA |
@@ -74,3 +82,4 @@
 | `FLOW-006` | Khóa kiến trúc v1 | Stage 04 PASS; 7/7 durable decisions PASS |
 | `FLOW-007` | Khóa interface contract | Stage 05 + contract path-resolution PASS |
 | `FLOW-008` | Chốt bộ sáu build cards | 6/6 card check + consistency PASS |
+| `C-001` | Authenticated API foundation (local) | lint/build/test/migrations/design/local HTTP PASS |

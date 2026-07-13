@@ -11,6 +11,11 @@
 | ERR-005 | P1 | OPEN | UI trộn dữ liệu tĩnh với dữ liệu D1 |
 | ERR-006 | P2 | DONE | Gọi sai đường dẫn Flow runner khi bắt đầu Research |
 | ERR-007 | P2 | DONE | Dùng sai tên cờ khi lưu ADR vào Flow harness |
+| ERR-008 | P2 | DONE | Wrangler không hỗ trợ cờ CLI `--migrations-dir` |
+| ERR-009 | P0 | DONE | Baseline migration đụng các bảng brownfield đã tồn tại |
+| ERR-010 | P2 | DONE | Drizzle không tái tạo migration khi còn thư mục meta rỗng |
+| ERR-011 | P1 | DONE | Cờ `nodejs_compat` bị khai báo trùng ở Vite và Wrangler |
+| ERR-012 | P1 | DONE | Compatibility date mới hơn runtime local hỗ trợ |
 
 ## Chi tiết
 
@@ -71,3 +76,42 @@
 - Sửa: thay bằng `decision add --id ... --title ... --doc flow/04-adr.md --status accepted`.
 - Sau sửa: 7/7 quyết định ADR được harness trả `PASS` và lưu bền.
 - Trạng thái: đóng trong cùng vòng, không ảnh hưởng mã ứng dụng.
+
+### ERR-008 - Cờ migrations-dir không được hỗ trợ
+
+- Phát hiện: 2026-07-13 khi QA migration C-001.
+- Trước sửa: Wrangler 4.92.0 trả `Unknown arguments: migrations-dir, migrationsDir`.
+- Nguyên nhân: phiên bản CLI đọc đường dẫn migration từ cấu hình D1, không nhận cờ lệnh.
+- Sửa: thêm `migrations_dir: .openai/drizzle` vào binding D1 local trong `wrangler.jsonc`.
+- Sau sửa: `wrangler d1 migrations apply DB --local` nhận đúng hai migration.
+
+### ERR-009 - Baseline migration không tương thích brownfield
+
+- Phát hiện: 2026-07-13 khi áp dụng lên D1 local hiện có.
+- Trước sửa: `table content_sources already exists` và migration rollback.
+- Nguyên nhân: schema trước chu kỳ không có migration ledger; migration mới coi database là rỗng.
+- Sửa: tách `0000` thành baseline `IF NOT EXISTS`, `0001` chỉ thêm identity email/index.
+- Sau sửa: cả D1 mới và D1 brownfield đều áp dụng `0000` + `0001` thành công; `PRAGMA table_info(learners)` có cột `email`.
+
+### ERR-010 - Thư mục meta Drizzle rỗng
+
+- Phát hiện: 2026-07-13 khi tái sinh baseline hai bước.
+- Trước sửa: `ENOENT .openai/drizzle/meta/_journal.json`.
+- Nguyên nhân: các file generated đã xóa nhưng thư mục meta rỗng còn tồn tại làm Drizzle hiểu là migration store hợp lệ.
+- Sửa: bỏ thư mục generated rỗng rồi chạy lại `npm run db:generate`.
+- Sau sửa: Drizzle sinh baseline và snapshot mới, sau đó sinh identity migration kế tiếp.
+
+### ERR-011 - Trùng compatibility flag
+
+- Phát hiện: 2026-07-13 khi khởi động preview C-001.
+- Trước sửa: Workers runtime báo `Compatibility flag specified multiple times: nodejs_compat`.
+- Nguyên nhân: Vite local binding đã có flag, `wrangler.jsonc` khai báo lần hai.
+- Sửa: bỏ flag khỏi Wrangler local config.
+- Sau sửa: preview vượt qua bước hợp nhất config.
+
+### ERR-012 - Compatibility date vượt runtime
+
+- Phát hiện: 2026-07-13 khi khởi động lại preview C-001.
+- Trước sửa: runtime hỗ trợ tối đa `2026-05-22` nhưng config dùng `2026-07-13`.
+- Sửa: khóa compatibility date ở `2026-05-22`.
+- Sau sửa: Vinext dev phục vụ thành công tại local; health, auth, OpenAPI và docs đều trả đúng contract.
