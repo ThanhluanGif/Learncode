@@ -19,7 +19,7 @@
 | PRD | DONE | FR1–FR7, pain mapping và numeric success metric PASS |
 | ADR | DONE | Mechanical + semantic gate PASS; 7 quyết định đã lưu vào harness |
 | Contract | DONE | Stage 05 mechanical + semantic PASS; path-resolution PASS |
-| Build cards | IN_PROGRESS | Planning hoàn tất; đang tạo card set |
+| Build cards | IN_PROGRESS | 6/6 cards valid; C-001 buildable, C-002–C-006 dependency-gated |
 | Review | TODO | Chưa bắt đầu |
 | Deploy | TODO | Chưa bắt đầu chu kỳ mới |
 | Verify live | TODO | Chưa bắt đầu |
@@ -54,6 +54,13 @@
 - Stage 05 mechanical + semantic gate PASS; `flow contract` không phát hiện prefix drift.
 - `flow constitution` được bỏ qua đúng quy định vì dự án chưa có constitution tùy chọn.
 
+### 2026-07-13 - Card set
+
+- Tạo sáu cards theo đúng ngân sách Scope: foundation, catalog, learning domain, contract proof, UI mock, production frontend.
+- 6/6 `flow check` PASS ở trạng thái todo.
+- Cross-artifact consistency PASS: 7/7 FR được card claim và contract phục vụ; không có scope/cut-list/terminology drift được phát hiện.
+- `flow ready`: chỉ C-001 buildable; các card sau bị chặn đúng theo dependency chain.
+
 ## Commit theo chặng
 
 | Commit | Nội dung | QA |
@@ -66,3 +73,4 @@
 | `FLOW-005` | Chốt Scope và PRD | Stage 02/03 mechanical + semantic PASS |
 | `FLOW-006` | Khóa kiến trúc v1 | Stage 04 PASS; 7/7 durable decisions PASS |
 | `FLOW-007` | Khóa interface contract | Stage 05 + contract path-resolution PASS |
+| `FLOW-008` | Chốt bộ sáu build cards | 6/6 card check + consistency PASS |
