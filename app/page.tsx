@@ -16,6 +16,7 @@ import {
   Clock3,
   Code2,
   Compass,
+  Database,
   Flame,
   FolderCode,
   GraduationCap,
@@ -26,6 +27,7 @@ import {
   ListChecks,
   LockKeyhole,
   Menu,
+  Pause,
   Play,
   Search,
   Settings,
@@ -37,7 +39,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type NavKey = "home" | "roadmap" | "practice" | "contest" | "library";
 type Level = "A" | "B" | "C";
@@ -111,12 +113,15 @@ const resources = [
 ];
 
 const officialExamYears = [
-  { year: "2025", title: "Vòng loại Quốc gia · Bảng B", format: "Lập trình · 120 phút", focus: "Mảng, số học, mô phỏng", url: "https://tinhoctre.vn/contest/tht2025_vongloaiqgdot3_thithu_b", status: "Có đề trên hệ thống" },
-  { year: "2024", title: "Kho đề Hội thi Tin học trẻ", format: "Lập trình · theo bảng", focus: "Luyện đề và chấm trực tuyến", url: "https://tinhoctre.vn/problems/", status: "Tra cứu đề gốc" },
-  { year: "2023", title: "Kho đề Hội thi Tin học trẻ", format: "Lập trình · theo bảng", focus: "Thuật toán nền tảng", url: "https://tinhoctre.vn/problems/", status: "Tra cứu đề gốc" },
-  { year: "2022", title: "Vòng sơ khảo Quốc gia", format: "Đề PDF · Bảng A/B/C", focus: "Dãy số, xử lý dữ liệu", url: "https://tinhoctre.vn/pdf/1ac89a8d-7f75-4c96-b6ef-3c51214fe345.pdf", status: "Đề gốc PDF" },
-  { year: "2016–2021", title: "Kho lưu trữ chính thức", format: "Đề theo năm và bảng", focus: "Ôn theo chuyên đề", url: "https://tinhoctre.vn/problems/", status: "Lọc tại kho đề" },
+  { year: "2025", title: "Vòng loại Quốc gia · Bảng B", format: "Lập trình · 120 phút", focus: "Mảng, số học, mô phỏng", url: "https://tinhoctre.vn/contest/tht2025_vongloaiqgdot3_thithu_b", status: "Đã nhập DB", examId: 1 },
+  { year: "2024", title: "Kho đề Hội thi Tin học trẻ", format: "Lập trình · theo bảng", focus: "Luyện đề và chấm trực tuyến", url: "https://tinhoctre.vn/problems/", status: "Tra cứu đề gốc", examId: null },
+  { year: "2023", title: "Kho đề Hội thi Tin học trẻ", format: "Lập trình · theo bảng", focus: "Thuật toán nền tảng", url: "https://tinhoctre.vn/problems/", status: "Tra cứu đề gốc", examId: null },
+  { year: "2022", title: "Vòng sơ khảo Quốc gia · Bảng A", format: "Đề PDF · 90 phút · 400 điểm", focus: "Scratch, số học, dãy số", url: "https://tinhoctre.vn/pdf/1ac89a8d-7f75-4c96-b6ef-3c51214fe345.pdf", status: "4 bài đã nhập DB", examId: 2 },
+  { year: "2016–2021", title: "Kho lưu trữ chính thức", format: "Đề theo năm và bảng", focus: "Ôn theo chuyên đề", url: "https://tinhoctre.vn/problems/", status: "Lọc tại kho đề", examId: null },
 ];
+
+type StoredProblem = { id: number; title: string; points: number; officialUrl: string; difficulty: string; topicsJson: string };
+type ActiveStudySession = { id: number; examPaperId: number | null; targetMinutes: number; status: string; sourceUrl: string; title: string };
 
 function ProgressRing({ value, size = 86 }: { value: number; size?: number }) {
   return (
@@ -280,15 +285,105 @@ function ContestView({ onStart }: { onStart: () => void }) {
 function LibraryView() {
   const [year, setYear] = useState("Tất cả");
   const [query, setQuery] = useState("");
+  const [stats, setStats] = useState({ sources: 3, exams: 2, problems: 9, attempts: 0 });
+  const [activeSession, setActiveSession] = useState<ActiveStudySession | null>(null);
+  const [sessionProblems, setSessionProblems] = useState<StoredProblem[]>([]);
+  const [startingExam, setStartingExam] = useState<number | null>(null);
+  const [notice, setNotice] = useState("");
   const years = ["Tất cả", "2025", "2024", "2023", "2022", "2016–2021"];
   const visibleExams = officialExamYears.filter((exam) => (year === "Tất cả" || exam.year === year) && `${exam.year} ${exam.title} ${exam.focus}`.toLowerCase().includes(query.toLowerCase()));
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/library").then(async (response) => {
+      if (!response.ok) throw new Error("Kho dữ liệu đang được khởi tạo");
+      return response.json() as Promise<{ stats: typeof stats }>;
+    }).then((data) => { if (!cancelled) setStats(data.stats); }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, []);
+
+  const startStudy = async (exam: typeof officialExamYears[number]) => {
+    if (!exam.examId) return;
+    setStartingExam(exam.examId);
+    setNotice("");
+    try {
+      const response = await fetch("/api/learning", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "start_session", examPaperId: exam.examId, mode: "exam" }) });
+      const data = await response.json() as { session?: { id: number; examPaperId: number | null; targetMinutes: number; status: string }; problems?: StoredProblem[]; error?: string };
+      if (!response.ok || !data.session) throw new Error(data.error || "Không thể bắt đầu phiên học");
+      setActiveSession({ ...data.session, sourceUrl: exam.url, title: `${exam.year} · ${exam.title}` });
+      setSessionProblems(data.problems ?? []);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Không thể bắt đầu phiên học");
+    } finally {
+      setStartingExam(null);
+    }
+  };
+
   return <div className="view inner-view"><div className="page-intro"><p className="eyebrow"><Library size={15} /> THƯ VIỆN HỌC THUẬT</p><h1>Học từ đề thật, hiểu đến gốc.</h1><p>Kho đề trong 10 năm gần đây được dẫn về nguồn chính thức; mỗi đề đi cùng cách ôn, nhật ký lỗi và mục tiêu kỹ năng.</p></div>
-    <section className="academic-hero card"><div><span className="tag primary">NGUỒN ĐÃ KIỂM CHỨNG</span><h2>Đề Tin học trẻ chính thức<br />2016–2025</h2><p>Không sao chép lại đề có bản quyền. Mở đề gốc trên hệ thống của Ban tổ chức, sau đó quay lại đây để học theo chuyên đề và ghi nhận tiến độ.</p><div className="academic-meta"><span><CheckCircle2 size={15} /> Ưu tiên tinhoctre.vn</span><span><CalendarDays size={15} /> 10 mùa thi</span><span><BookOpen size={15} /> A · B · C</span></div></div><div className="research-path"><span>QUY TRÌNH HỌC ĐỀ</span><div><i>01</i><p><b>Đọc & phân loại</b><small>Gắn thẻ chủ đề, mức độ</small></p></div><div><i>02</i><p><b>Tự giải có giờ</b><small>Không xem lời giải sớm</small></p></div><div><i>03</i><p><b>Phản tư sau thi</b><small>Ghi lỗi và kế hoạch ôn</small></p></div></div></section>
+    <section className="academic-hero card"><div><span className="tag primary">NGUỒN ĐÃ KIỂM CHỨNG</span><h2>Đề Tin học trẻ chính thức<br />2016–2025</h2><p>Metadata và tiến độ được lưu trong database; nội dung gốc luôn mở từ nguồn của Ban tổ chức để tôn trọng bản quyền.</p><div className="academic-meta"><span><Database size={15} /> {stats.sources} nguồn · {stats.exams} đề</span><span><Code2 size={15} /> {stats.problems} bài đã lập chỉ mục</span><span><CheckCircle2 size={15} /> {stats.attempts} lượt làm đã lưu</span></div></div><div className="research-path"><span>QUY TRÌNH HỌC ĐỀ</span><div><i>01</i><p><b>Đọc & phân loại</b><small>Gắn thẻ chủ đề, mức độ</small></p></div><div><i>02</i><p><b>Tự giải có giờ</b><small>Không xem lời giải sớm</small></p></div><div><i>03</i><p><b>Phản tư sau thi</b><small>Ghi lỗi và kế hoạch ôn</small></p></div></div></section>
+    {notice && <div className="library-notice"><HelpCircle size={17} /><span>{notice}</span><button onClick={() => setNotice("")}><X size={15} /></button></div>}
     <div className="library-toolbar"><label className="library-search"><Search size={20} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm năm, bảng hoặc chuyên đề..." /></label><div className="year-filter">{years.map((item) => <button className={year === item ? "active" : ""} onClick={() => setYear(item)} key={item}>{item}</button>)}</div></div>
-    <section className="exam-archive"><div className="archive-heading"><div><h2>Đề thi & kho lưu trữ chính thức</h2><p>{visibleExams.length} nhóm tài liệu phù hợp · luôn mở ở trang nguồn</p></div><a href="https://tinhoctre.vn/problems/" target="_blank" rel="noreferrer">Mở kho đề chính thức <ExternalLink size={15} /></a></div><div className="exam-grid">{visibleExams.map((exam) => <article className="exam-card card" key={exam.year}><div className="exam-year">{exam.year}</div><div><span className="official-label"><CheckCircle2 size={13} /> NGUỒN CHÍNH THỨC</span><h3>{exam.title}</h3><p>{exam.format}</p><small><b>Trọng tâm:</b> {exam.focus}</small></div><div className="exam-card-bottom"><span>{exam.status}</span><a href={exam.url} target="_blank" rel="noreferrer">Xem nguồn <ExternalLink size={15} /></a></div></article>)}</div></section>
+    <section className="exam-archive"><div className="archive-heading"><div><h2>Đề thi & kho lưu trữ chính thức</h2><p>{visibleExams.length} nhóm tài liệu phù hợp · đề có nhãn DB hỗ trợ phiên học</p></div><a href="https://tinhoctre.vn/problems/" target="_blank" rel="noreferrer">Mở kho đề chính thức <ExternalLink size={15} /></a></div><div className="exam-grid">{visibleExams.map((exam) => <article className="exam-card card" key={exam.year}><div className="exam-year">{exam.year}</div><div><span className="official-label"><CheckCircle2 size={13} /> NGUỒN CHÍNH THỨC</span><h3>{exam.title}</h3><p>{exam.format}</p><small><b>Trọng tâm:</b> {exam.focus}</small></div><div className="exam-card-actions"><span>{exam.status}</span>{exam.examId ? <button disabled={startingExam === exam.examId} onClick={() => startStudy(exam)}><Play size={14} fill="currentColor" /> {startingExam === exam.examId ? "Đang tạo..." : "Bắt đầu học"}</button> : <a href={exam.url} target="_blank" rel="noreferrer">Xem nguồn <ExternalLink size={14} /></a>}</div></article>)}</div></section>
     <section className="study-lab"><article className="lab-card card"><span className="mini-icon violet"><BrainCircuit size={19} /></span><h3>Nhật ký sau đề</h3><p>Ghi 1 ý tưởng đúng, 1 lỗi và 1 việc ôn lại. Cách này biến một đề thi thành dữ liệu cho lần sau.</p><button>Viết phản tư <ArrowRight size={16} /></button></article><article className="lab-card card"><span className="mini-icon orange"><TimerReset size={19} /></span><h3>Phiên tự học 150 phút</h3><p>Chọn một đề, bật đồng hồ, tự chấm trên hệ thống nguồn và so sánh chiến thuật sau khi nộp.</p><button>Khởi động phiên <ArrowRight size={16} /></button></article><article className="lab-card card"><span className="mini-icon green"><Target size={19} /></span><h3>Ôn theo lỗ hổng</h3><p>Ưu tiên các chủ đề xuất hiện nhiều trong đề thật: mảng, số học, tham lam và tìm kiếm.</p><button>Xem bản đồ kỹ năng <ArrowRight size={16} /></button></article></section>
     <h2 className="learning-materials-title">Học liệu bổ trợ đã tuyển chọn</h2><div className="resource-grid">{resources.map((resource) => { const Icon = resource.icon; return <article className="resource-card card" key={resource.name}><div className={`resource-icon ${resource.color}`}><Icon size={24} /></div><div className="resource-rating"><span>★</span> {resource.rating}</div><h3>{resource.name}</h3><p>{resource.type}</p><small>{resource.note}</small><button>Mở học liệu <ArrowRight size={16} /></button></article>; })}</div>
+    {activeSession && <StudyWorkspace session={activeSession} problems={sessionProblems} onClose={() => setActiveSession(null)} onSaved={(message) => { setNotice(message); setStats((current) => ({ ...current, attempts: current.attempts + 1 })); }} />}
   </div>;
+}
+
+function StudyWorkspace({ session, problems, onClose, onSaved }: { session: ActiveStudySession; problems: StoredProblem[]; onClose: () => void; onSaved: (message: string) => void }) {
+  const [status, setStatus] = useState<"active" | "paused">("active");
+  const [elapsed, setElapsed] = useState(0);
+  const [selectedProblem, setSelectedProblem] = useState<number | null>(problems[0]?.id ?? null);
+  const [score, setScore] = useState(0);
+  const [confidence, setConfidence] = useState(3);
+  const [successNote, setSuccessNote] = useState("");
+  const [errorNote, setErrorNote] = useState("");
+  const [nextAction, setNextAction] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!session || status !== "active") return;
+    const timer = window.setInterval(() => setElapsed((value) => value + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [session, status]);
+
+  const minutes = String(Math.floor(elapsed / 60)).padStart(2, "0");
+  const seconds = String(elapsed % 60).padStart(2, "0");
+
+  const updateStatus = async (nextStatus: "active" | "paused") => {
+    setError("");
+    const response = await fetch("/api/learning", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "set_status", sessionId: session.id, status: nextStatus }) });
+    if (!response.ok) { const data = await response.json() as { error?: string }; setError(data.error || "Không thể cập nhật phiên học"); return; }
+    setStatus(nextStatus);
+  };
+
+  const finishSession = async () => {
+    setSaving(true);
+    setError("");
+    try {
+      if (selectedProblem) {
+        const attemptResponse = await fetch("/api/learning", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "record_attempt", sessionId: session.id, problemId: selectedProblem, status: score > 0 ? "scored" : "attempted", score, confidence, timeSpentSeconds: elapsed }) });
+        if (!attemptResponse.ok) { const data = await attemptResponse.json() as { error?: string }; throw new Error(data.error || "Không thể lưu lượt làm"); }
+      }
+      const reflectionResponse = await fetch("/api/learning", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "save_reflection", sessionId: session.id, problemId: selectedProblem, successNote, errorNote, nextAction }) });
+      if (!reflectionResponse.ok) { const data = await reflectionResponse.json() as { error?: string }; throw new Error(data.error || "Không thể lưu nhật ký"); }
+      const completeResponse = await fetch("/api/learning", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "set_status", sessionId: session.id, status: "completed", score }) });
+      if (!completeResponse.ok) { const data = await completeResponse.json() as { error?: string }; throw new Error(data.error || "Không thể hoàn thành phiên học"); }
+      onSaved("Đã lưu phiên học, kết quả làm bài và nhật ký phản tư vào database.");
+      onClose();
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Không thể lưu phiên học");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return <div className="modal-shell" role="dialog" aria-modal="true" aria-label="Phiên học đề chính thức"><div className="study-workspace">
+    <header><div><span className="tag primary">PHIÊN HỌC #{session.id}</span><h2>{session.title}</h2></div><div className={`session-clock ${status}`}><TimerReset size={18} /><strong>{minutes}:{seconds}</strong><small>/ {session.targetMinutes} phút</small></div><button className="modal-x" onClick={onClose} aria-label="Đóng phiên học"><X size={20} /></button></header>
+    <div className="workspace-grid"><aside><div className="workspace-source"><span>ĐỀ GỐC</span><a href={session.sourceUrl} target="_blank" rel="noreferrer">Mở trên tinhoctre.vn <ExternalLink size={14} /></a></div><p className="workspace-label">BÀI TRONG ĐỀ</p>{problems.length ? <div className="workspace-problems">{problems.map((problem, index) => <button className={selectedProblem === problem.id ? "active" : ""} onClick={() => { setSelectedProblem(problem.id); setScore(0); }} key={problem.id}><i>{index + 1}</i><span><b>{problem.title}</b><small>{problem.difficulty} · {problem.points} điểm</small></span></button>)}</div> : <div className="empty-problems"><Database size={22} /><p>Đề đã được lưu metadata. Danh sách bài sẽ được đồng bộ khi nguồn công bố.</p></div>}<div className="session-controls"><button onClick={() => updateStatus(status === "active" ? "paused" : "active")}>{status === "active" ? <><Pause size={15} /> Tạm dừng</> : <><Play size={15} fill="currentColor" /> Tiếp tục</>}</button><span>{status === "active" ? "Đang tính giờ" : "Đã tạm dừng"}</span></div></aside>
+      <main><div className="reflection-heading"><div><p>NHẬT KÝ HỌC TẬP</p><h3>Chốt lại điều bạn vừa học</h3></div><span>tự đánh giá</span></div>{selectedProblem && <div className="attempt-row"><label><span>Điểm tự chấm</span><input type="number" min="0" max="100" value={score} onChange={(event) => setScore(Math.max(0, Math.min(100, Number(event.target.value))))} /></label><label><span>Mức tự tin</span><select value={confidence} onChange={(event) => setConfidence(Number(event.target.value))}><option value="1">1 · Chưa hiểu</option><option value="2">2 · Còn mơ hồ</option><option value="3">3 · Hiểu ý tưởng</option><option value="4">4 · Tự cài đặt</option><option value="5">5 · Có thể giải thích</option></select></label></div>}<label className="reflection-field"><span>Điều đã làm tốt</span><textarea value={successNote} onChange={(event) => setSuccessNote(event.target.value)} placeholder="Ví dụ: nhận ra được quy luật và chọn đúng cấu trúc dữ liệu..." /></label><label className="reflection-field"><span>Lỗi hoặc chỗ còn vướng</span><textarea value={errorNote} onChange={(event) => setErrorNote(event.target.value)} placeholder="Ví dụ: sai cận, quên trường hợp biên, mất thời gian debug..." /></label><label className="reflection-field"><span>Việc tiếp theo</span><textarea value={nextAction} onChange={(event) => setNextAction(event.target.value)} placeholder="Ví dụ: làm lại sau 2 ngày và ôn chuyên đề xâu..." /></label>{error && <div className="workspace-error">{error}</div>}<button className="primary-button finish-session" disabled={saving} onClick={finishSession}><CheckCircle2 size={17} /> {saving ? "Đang lưu..." : "Hoàn thành & lưu tiến độ"}</button></main></div>
+  </div></div>;
 }
 
 function LessonModal({ open, onClose, onComplete }: { open: boolean; onClose: () => void; onComplete: () => void }) {
