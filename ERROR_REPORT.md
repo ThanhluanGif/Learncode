@@ -147,5 +147,6 @@
   - redeploy version 4 sau phục hồi vẫn platform 500;
   - version 5 được lưu mới từ commit đã push `b202b22`, archive được đóng gói mới và deployment `succeeded`, nhưng vẫn platform 500;
   - trình duyệt owner-only hiện “Continue with ChatGPT”, nhưng `/signin-with-chatgpt` của site trả cùng platform 500; bypass-token cũng 500.
-- Xử lý hiện tại: giữ version 5 làm bản production dự kiến; không thay đổi access policy và không hạ chuẩn live gate.
+- Kiểm tra lặp có giới hạn: rotate bypass token không thay đổi kết quả; version 6 được tạo từ commit đã push `b160ea6` sau lint/build/test/fresh-migration PASS, deployment `succeeded`, nhưng cả năm live route vẫn platform 500.
+- Xử lý hiện tại: giữ version 6 làm bản production dự kiến; không thay đổi access policy, không mở site công khai và không hạ chuẩn live gate.
 - Tiêu chí đóng: incident được khắc phục và production URL trả health `200`, OpenAPI/docs `200`, missing auth `401`, authenticated `/api/me` `200`.

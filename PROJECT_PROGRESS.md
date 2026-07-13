@@ -81,6 +81,8 @@
 - OpenAI Status chuyển incident sang `Resolved` lúc 12:59. Redeploy version 4 sau phục hồi vẫn 500.
 - Đã push commit `b202b22`, đóng gói lại artifact và tạo version 5 hoàn toàn mới sau phục hồi; deployment `succeeded` nhưng hostname vẫn trả platform 500.
 - QA bằng phiên trình duyệt đăng nhập thật: site hiện trang “Continue with ChatGPT”, nhưng `/signin-with-chatgpt` của chính site trả platform 500; bypass-token cũng 500.
+- Vòng tiếp tục Flow: rotate bypass token vẫn 500; lint PASS, build PASS, test 4/4 và fresh D1 migration 2/2 tiếp tục xanh.
+- Đã push commit `b160ea6`, đóng gói artifact sạch và tạo version 6; deployment private `succeeded` nhưng `/`, `/openapi.json`, `/docs`, `/api/health`, `/api/me` vẫn trả cùng platform HTML 500.
 - Bước tiếp theo: kiểm tra lại auth/dispatch khi project Sites thực sự phục hồi; sau đó chạy năm live checks, đóng ERR-014/DBG-009, điền done-evidence và gọi `flow card done C-001`.
 
 ## Commit theo chặng
@@ -97,4 +99,4 @@
 | `FLOW-007` | Khóa interface contract | Stage 05 + contract path-resolution PASS |
 | `FLOW-008` | Chốt bộ sáu build cards | 6/6 card check + consistency PASS |
 | `C-001` | Authenticated API foundation (local) | lint/build/test/migrations/design/local HTTP PASS |
-| `C-001-DIAG` | Cô lập lỗi live khỏi code và bundle | v4/v2/v1 + v5 hậu phục hồi đều deploy succeeded nhưng cùng platform 500; sign-in dispatch cũng 500 |
+| `C-001-DIAG` | Cô lập lỗi live khỏi code và bundle | v4/v2/v1/v5/v6 đều deploy succeeded nhưng cùng platform 500; token mới và sign-in dispatch cũng 500 |
