@@ -15,9 +15,9 @@
 | Đánh giá codebase hiện tại | DONE | Mechanical gate PASS sau xác nhận của chủ dự án |
 | Idea | DONE | Mechanical + semantic gate PASS |
 | Research | DONE | Mechanical + semantic gate PASS; có 3 đối thủ, 3 phản hồi thật và GTM cụ thể |
-| Scope | BLOCKED | Bản nháp GO đã qua preflight; chờ chủ dự án duyệt cut list bắt buộc |
-| PRD | TODO | Chưa mở gate |
-| ADR | TODO | Chưa mở gate |
+| Scope | DONE | Chủ dự án xác nhận GO; mechanical + semantic gate PASS |
+| PRD | DONE | FR1–FR7, pain mapping và numeric success metric PASS |
+| ADR | IN_PROGRESS | Stage 04 đã mở |
 | Contract | TODO | Chưa mở gate |
 | Build cards | TODO | Chưa tạo |
 | Review | TODO | Chưa bắt đầu |
@@ -42,6 +42,13 @@
 - `flow status` báo gate Scope `PASS` ở mức cơ học; semantic challenge không phát hiện grade laundering hoặc feature L-impact quá đắt.
 - Bước tiếp theo: chủ dự án duyệt quyết định GO và cut list; chỉ sau xác nhận mới chạy `flow next` để mở PRD.
 
+### 2026-07-13 - Scope và PRD
+
+- Chủ dự án xác nhận tiếp tục theo Flow, được ghi nhận là sign-off quyết định GO.
+- Scope gate PASS và mở PRD; không có grade laundering, mọi tính năng cấp C nằm trong cut list hoặc được tái kiến trúc.
+- PRD chốt FR1–FR7, trace từ pain đến feature và metric pilot định lượng.
+- Stage 03 mechanical + semantic gate PASS; ADR được mở.
+
 ## Commit theo chặng
 
 | Commit | Nội dung | QA |
@@ -51,3 +58,4 @@
 | `FLOW-002` | Chốt ý tưởng sản phẩm | Stage 00 mechanical + semantic PASS |
 | `FLOW-003` | Nghiên cứu thị trường và hành vi học | Stage 01 mechanical + semantic PASS |
 | `FLOW-004` | Soạn phạm vi v1 để duyệt | Scope preflight PASS; dừng tại mandatory sign-off |
+| `FLOW-005` | Chốt Scope và PRD | Stage 02/03 mechanical + semantic PASS |
