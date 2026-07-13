@@ -18,8 +18,8 @@
 | Scope | DONE | Chủ dự án xác nhận GO; mechanical + semantic gate PASS |
 | PRD | DONE | FR1–FR7, pain mapping và numeric success metric PASS |
 | ADR | DONE | Mechanical + semantic gate PASS; 7 quyết định đã lưu vào harness |
-| Contract | IN_PROGRESS | Stage 05 đã mở |
-| Build cards | TODO | Chưa tạo |
+| Contract | DONE | Stage 05 mechanical + semantic PASS; path-resolution PASS |
+| Build cards | IN_PROGRESS | Planning hoàn tất; đang tạo card set |
 | Review | TODO | Chưa bắt đầu |
 | Deploy | TODO | Chưa bắt đầu chu kỳ mới |
 | Verify live | TODO | Chưa bắt đầu |
@@ -50,6 +50,9 @@
 - Stage 03 mechanical + semantic gate PASS; ADR được mở.
 - ADR quyết định D1/Drizzle, identity Sites phía server, deploy private, judge ngoài, provenance/bản quyền, contract seam và roadmap có giải thích.
 - Stage 04 mechanical + semantic gate PASS; 7/7 decision records lưu bền; Contract được mở.
+- Contract chốt 10 interface, shared shapes, error/auth semantics và map đầy đủ FR1–FR7.
+- Stage 05 mechanical + semantic gate PASS; `flow contract` không phát hiện prefix drift.
+- `flow constitution` được bỏ qua đúng quy định vì dự án chưa có constitution tùy chọn.
 
 ## Commit theo chặng
 
@@ -62,3 +65,4 @@
 | `FLOW-004` | Soạn phạm vi v1 để duyệt | Scope preflight PASS; dừng tại mandatory sign-off |
 | `FLOW-005` | Chốt Scope và PRD | Stage 02/03 mechanical + semantic PASS |
 | `FLOW-006` | Khóa kiến trúc v1 | Stage 04 PASS; 7/7 durable decisions PASS |
+| `FLOW-007` | Khóa interface contract | Stage 05 + contract path-resolution PASS |
