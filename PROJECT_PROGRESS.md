@@ -17,8 +17,8 @@
 | Research | DONE | Mechanical + semantic gate PASS; có 3 đối thủ, 3 phản hồi thật và GTM cụ thể |
 | Scope | DONE | Chủ dự án xác nhận GO; mechanical + semantic gate PASS |
 | PRD | DONE | FR1–FR7, pain mapping và numeric success metric PASS |
-| ADR | IN_PROGRESS | Stage 04 đã mở |
-| Contract | TODO | Chưa mở gate |
+| ADR | DONE | Mechanical + semantic gate PASS; 7 quyết định đã lưu vào harness |
+| Contract | IN_PROGRESS | Stage 05 đã mở |
 | Build cards | TODO | Chưa tạo |
 | Review | TODO | Chưa bắt đầu |
 | Deploy | TODO | Chưa bắt đầu chu kỳ mới |
@@ -48,6 +48,8 @@
 - Scope gate PASS và mở PRD; không có grade laundering, mọi tính năng cấp C nằm trong cut list hoặc được tái kiến trúc.
 - PRD chốt FR1–FR7, trace từ pain đến feature và metric pilot định lượng.
 - Stage 03 mechanical + semantic gate PASS; ADR được mở.
+- ADR quyết định D1/Drizzle, identity Sites phía server, deploy private, judge ngoài, provenance/bản quyền, contract seam và roadmap có giải thích.
+- Stage 04 mechanical + semantic gate PASS; 7/7 decision records lưu bền; Contract được mở.
 
 ## Commit theo chặng
 
@@ -59,3 +61,4 @@
 | `FLOW-003` | Nghiên cứu thị trường và hành vi học | Stage 01 mechanical + semantic PASS |
 | `FLOW-004` | Soạn phạm vi v1 để duyệt | Scope preflight PASS; dừng tại mandatory sign-off |
 | `FLOW-005` | Chốt Scope và PRD | Stage 02/03 mechanical + semantic PASS |
+| `FLOW-006` | Khóa kiến trúc v1 | Stage 04 PASS; 7/7 durable decisions PASS |

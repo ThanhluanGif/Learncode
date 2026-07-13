@@ -10,6 +10,7 @@ Chưa có lỗi nào được đóng trong chu kỳ Flow mới. Tệp này chỉ
 | --- | --- | --- | --- | --- |
 | DBG-000 | Baseline QA | Test FAIL 0/2 | Chưa sửa trong giai đoạn assessment | OPEN |
 | DBG-001 | ERR-006 Flow runner | `no such file or directory` | `flow recall` PASS, exit `0` | DONE |
+| DBG-002 | ERR-007 Flow harness ADR | CLI thiếu `--title` | 7/7 `decision add` PASS | DONE |
 
 ## Quy tắc ghi nhận
 
@@ -25,3 +26,4 @@ Một lỗi chỉ được chuyển sang `DONE` khi có đủ:
 ## Lịch sử hoàn thành
 
 - `DBG-001` (2026-07-13): sửa đường dẫn runner từ `scripts/flow.sh` thành `runner/flow.sh`; QA bằng chính lệnh `flow recall`, kết quả entropy `0/100` và không có nợ mở.
+- `DBG-002` (2026-07-13): đổi cờ ADR từ `--summary` sang `--title`; QA bằng bảy bản ghi decision được Flow harness xác nhận `PASS`.

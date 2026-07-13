@@ -10,6 +10,7 @@
 | ERR-004 | P1 | OPEN | Chưa có hợp đồng API được phục vụ tại runtime |
 | ERR-005 | P1 | OPEN | UI trộn dữ liệu tĩnh với dữ liệu D1 |
 | ERR-006 | P2 | DONE | Gọi sai đường dẫn Flow runner khi bắt đầu Research |
+| ERR-007 | P2 | DONE | Dùng sai tên cờ khi lưu ADR vào Flow harness |
 
 ## Chi tiết
 
@@ -61,3 +62,12 @@
 - Sửa: xác định runner thực tại `/Users/admin/.codex/skills/flow/runner/flow.sh` và gọi bằng `bash`.
 - Sau sửa: `flow recall` thoát mã `0`, entropy `0/100`, không có nợ mở.
 - Trạng thái: đóng trong cùng vòng thao tác, không có thay đổi mã ứng dụng.
+
+### ERR-007 - Sai tên cờ Flow harness
+
+- Phát hiện: 2026-07-13 sau khi ADR qua gate.
+- Trước sửa: `flow_harness.py decision add` từ chối `--summary` và yêu cầu `--title`.
+- Nguyên nhân: dùng schema của lệnh trace cho lệnh decision.
+- Sửa: thay bằng `decision add --id ... --title ... --doc flow/04-adr.md --status accepted`.
+- Sau sửa: 7/7 quyết định ADR được harness trả `PASS` và lưu bền.
+- Trạng thái: đóng trong cùng vòng, không ảnh hưởng mã ứng dụng.
