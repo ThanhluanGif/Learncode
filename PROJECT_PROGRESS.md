@@ -113,6 +113,12 @@
 - Version 6 vẫn ở chế độ riêng tư `custom`. Sáu route `/`, `/openapi.json`, `/docs`, `/api/health`, `/api/me` và `/signin-with-chatgpt?return_to=%2F` tiếp tục trả platform HTML `500` dù dùng bypass token hiện hành.
 - Đây là lần tái hiện thứ nhất trong chu kỳ audit mới. Không đổi access policy vì yêu cầu “tiếp tục” không phải xác nhận rõ ràng cho việc tạm công khai site; không tạo deployment trùng lặp khi artifact ứng dụng không đổi.
 
+### 2026-07-13 22:25 +07 - Resumed blocked audit 2/3
+
+- Sites metadata vẫn hợp lệ: project `active`, version 6, access `custom` revision `1`, một allowed user, không group, auth client và bypass token đều hiện diện.
+- Probe ẩn danh trên sáu route trả cùng `500 text/html; charset=utf-8`, kích thước 2.563 byte và trang nền tảng “Something went wrong”.
+- Đây là lần tái hiện thứ hai liên tiếp sau resume. Giữ C-001 `todo`, không mở C-002 và không thay đổi access khi chưa có quyền rõ ràng.
+
 ## Commit theo chặng
 
 | Commit | Nội dung | QA |
