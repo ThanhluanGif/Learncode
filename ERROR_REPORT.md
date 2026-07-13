@@ -17,7 +17,7 @@
 | ERR-011 | P1 | DONE | Cờ `nodejs_compat` bị khai báo trùng ở Vite và Wrangler |
 | ERR-012 | P1 | DONE | Compatibility date mới hơn runtime local hỗ trợ |
 | ERR-013 | P0 | DONE | Artifact v3 có binding D1 trùng và đóng gói migration cũ |
-| ERR-014 | P0 | BLOCKED | ChatGPT Sites trả platform `500` cho cả các version trước đó từng hoạt động |
+| ERR-014 | P0 | BLOCKED | Sites auth/dispatch của project vẫn trả platform `500` sau incident chung |
 
 ## Chi tiết
 
@@ -142,5 +142,10 @@
   - version 1 (không D1) -> deployment succeeded, cùng platform 500;
   - cùng bundle version 4 chạy qua Wrangler local -> Worker khởi tạo và các route không cần DB trả đúng contract.
 - Bằng chứng ngoài: OpenAI Status đang điều tra [“Elevated errors when creating sites in ChatGPT”](https://status.openai.com/incidents/01KXDMD4T8TM58CSKBN7YFD2CK) đúng thời điểm kiểm thử.
-- Xử lý hiện tại: restore version 4 làm production deployment; không thay đổi access policy và không hạ chuẩn live gate.
+- Kiểm tra hậu phục hồi:
+  - OpenAI Status đánh dấu incident `Resolved` lúc 12:59 ngày 2026-07-13;
+  - redeploy version 4 sau phục hồi vẫn platform 500;
+  - version 5 được lưu mới từ commit đã push `b202b22`, archive được đóng gói mới và deployment `succeeded`, nhưng vẫn platform 500;
+  - trình duyệt owner-only hiện “Continue with ChatGPT”, nhưng `/signin-with-chatgpt` của site trả cùng platform 500; bypass-token cũng 500.
+- Xử lý hiện tại: giữ version 5 làm bản production dự kiến; không thay đổi access policy và không hạ chuẩn live gate.
 - Tiêu chí đóng: incident được khắc phục và production URL trả health `200`, OpenAPI/docs `200`, missing auth `401`, authenticated `/api/me` `200`.

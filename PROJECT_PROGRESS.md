@@ -19,7 +19,7 @@
 | PRD | DONE | FR1–FR7, pain mapping và numeric success metric PASS |
 | ADR | DONE | Mechanical + semantic gate PASS; 7 quyết định đã lưu vào harness |
 | Contract | DONE | Stage 05 mechanical + semantic PASS; path-resolution PASS |
-| Build cards | BLOCKED | C-001 local + production-bundle QA PASS; live gate bị chặn bởi sự cố ChatGPT Sites đang được OpenAI điều tra |
+| Build cards | BLOCKED | C-001 local + production-bundle QA PASS; Sites auth/dispatch của project vẫn 500 sau khi incident chung được đánh dấu resolved |
 | Review | TODO | Chưa bắt đầu |
 | Deploy | TODO | Chưa bắt đầu chu kỳ mới |
 | Verify live | TODO | Chưa bắt đầu |
@@ -78,7 +78,10 @@
 - Rollback kiểm soát sang version 2 từng hoạt động (D1) và version 1 (không D1): cả hai deployment đều `succeeded` nhưng production hostname vẫn trả đúng cùng HTML `500`.
 - OpenAI Status đồng thời công bố sự cố đang điều tra: [Elevated errors when creating sites in ChatGPT](https://status.openai.com/incidents/01KXDMD4T8TM58CSKBN7YFD2CK).
 - Đã restore version 4 làm deployment production hiện tại. C-001 giữ trạng thái chưa hoàn thành; chỉ live gate bị chặn, không có QA local nào còn đỏ.
-- Bước tiếp theo sau khi dịch vụ hồi phục: chạy lại năm live checks, đóng ERR-014/DBG-009, điền done-evidence và gọi `flow card done C-001`.
+- OpenAI Status chuyển incident sang `Resolved` lúc 12:59. Redeploy version 4 sau phục hồi vẫn 500.
+- Đã push commit `b202b22`, đóng gói lại artifact và tạo version 5 hoàn toàn mới sau phục hồi; deployment `succeeded` nhưng hostname vẫn trả platform 500.
+- QA bằng phiên trình duyệt đăng nhập thật: site hiện trang “Continue with ChatGPT”, nhưng `/signin-with-chatgpt` của chính site trả platform 500; bypass-token cũng 500.
+- Bước tiếp theo: kiểm tra lại auth/dispatch khi project Sites thực sự phục hồi; sau đó chạy năm live checks, đóng ERR-014/DBG-009, điền done-evidence và gọi `flow card done C-001`.
 
 ## Commit theo chặng
 
@@ -94,4 +97,4 @@
 | `FLOW-007` | Khóa interface contract | Stage 05 + contract path-resolution PASS |
 | `FLOW-008` | Chốt bộ sáu build cards | 6/6 card check + consistency PASS |
 | `C-001` | Authenticated API foundation (local) | lint/build/test/migrations/design/local HTTP PASS |
-| `C-001-DIAG` | Cô lập lỗi live khỏi code và bundle | v4/v2/v1 đều deploy succeeded nhưng cùng platform 500; incident chính thức đang mở |
+| `C-001-DIAG` | Cô lập lỗi live khỏi code và bundle | v4/v2/v1 + v5 hậu phục hồi đều deploy succeeded nhưng cùng platform 500; sign-in dispatch cũng 500 |
