@@ -1,33 +1,17 @@
-import { and, asc, desc, eq, like, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { getDb } from "../../../db";
 import { contentSources, examPapers, problemAttempts, problems, studySessions } from "../../../db/schema";
-
-function databaseError(error: unknown) {
-  const message = error instanceof Error ? error.message : "Không thể đọc thư viện";
-  if (message.includes("no such table") || message.includes("D1 binding")) {
-    return "Kho dữ liệu chưa được khởi tạo. Hãy áp dụng migration D1 trước khi sử dụng.";
-  }
-  return message;
-}
+import { requireCurrentLearner } from "../../../lib/auth/current-learner";
+import { handledApiError } from "../../../lib/api/errors";
+import { buildLibraryFilters } from "../../../lib/api/library-query";
 
 export async function GET(request: Request) {
   try {
+    const learner = await requireCurrentLearner(request.headers);
     const url = new URL(request.url);
-    const year = Number(url.searchParams.get("year"));
-    const division = url.searchParams.get("division")?.trim();
-    const query = url.searchParams.get("q")?.trim();
+    const { examFilters, problemFilters, appliedFilters } = buildLibraryFilters(url.searchParams);
+    
     const db = getDb();
-
-    const examFilters = [
-      Number.isFinite(year) && year > 0 ? eq(examPapers.year, year) : undefined,
-      division ? eq(examPapers.division, division) : undefined,
-      query ? or(like(examPapers.title, `%${query}%`), like(examPapers.round, `%${query}%`)) : undefined,
-    ].filter(Boolean);
-
-    const problemFilters = [
-      division ? or(eq(problems.division, division), eq(problems.division, "B/C")) : undefined,
-      query ? or(like(problems.title, `%${query}%`), like(problems.topicsJson, `%${query}%`)) : undefined,
-    ].filter(Boolean);
 
     const [sources, exams, problemRows, stats, recentSessions] = await Promise.all([
       db.select().from(contentSources).orderBy(desc(contentSources.isOfficial), asc(contentSources.id)),
@@ -42,6 +26,7 @@ export async function GET(request: Request) {
         officialUrl: examPapers.officialUrl,
         sourceStatus: examPapers.sourceStatus,
         sourceTitle: contentSources.title,
+        sourceId: examPapers.sourceId,
       }).from(examPapers).innerJoin(contentSources, eq(examPapers.sourceId, contentSources.id))
         .where(examFilters.length ? and(...examFilters) : undefined)
         .orderBy(desc(examPapers.year), asc(examPapers.division)),
@@ -52,7 +37,7 @@ export async function GET(request: Request) {
         problems: sql<number>`count(distinct ${problems.id})`,
         attempts: sql<number>`count(distinct ${problemAttempts.id})`,
       }).from(problems).leftJoin(problemAttempts, eq(problemAttempts.problemId, problems.id)),
-      db.select().from(studySessions).where(eq(studySessions.learnerId, 1)).orderBy(desc(studySessions.updatedAt)).limit(5),
+      db.select().from(studySessions).where(eq(studySessions.learnerId, learner.id)).orderBy(desc(studySessions.updatedAt)).limit(5),
     ]);
 
     return Response.json({
@@ -64,9 +49,10 @@ export async function GET(request: Request) {
         sourceMetadata: JSON.parse(problem.sourceMetadataJson) as Record<string, unknown>,
       })),
       stats: { sources: sources.length, exams: exams.length, problems: stats[0]?.problems ?? 0, attempts: stats[0]?.attempts ?? 0 },
+      appliedFilters,
       recentSessions,
     });
   } catch (error) {
-    return Response.json({ error: databaseError(error) }, { status: 500 });
+    return handledApiError(error);
   }
 }
