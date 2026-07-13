@@ -12,7 +12,7 @@
 | Chặng | Trạng thái | Bằng chứng gần nhất |
 | --- | --- | --- |
 | Khởi tạo Flow | DONE | Flow mode `work`, project type `web` |
-| Đánh giá codebase hiện tại | BLOCKED | `flow/00-inspect.md` đã soạn; chờ chủ dự án xác nhận gate |
+| Đánh giá codebase hiện tại | DONE | Mechanical gate PASS sau xác nhận của chủ dự án |
 | Idea | TODO | Chưa mở gate |
 | Research | TODO | Chưa mở gate |
 | Scope | TODO | Chưa mở gate |
@@ -34,6 +34,7 @@
 - Đã lập bản đồ stack, module, chức năng hiện có, rủi ro và khoảng trống sản phẩm.
 - QA baseline: lint PASS, build PASS, test FAIL 0/2.
 - Mechanical assessment gate đã chạy và dừng đúng tại yêu cầu xác nhận của con người (`flow/00-inspect.md:14`).
+- Chủ dự án đã xác nhận assessment; mechanical gate PASS.
 - Bước tiếp theo: chủ dự án xác nhận nội dung `flow/00-inspect.md`; sau đó chạy gate và tiếp tục Idea -> Research -> Scope.
 
 ## Commit theo chặng
@@ -41,3 +42,4 @@
 | Commit | Nội dung | QA |
 | --- | --- | --- |
 | `FLOW-000` | Khởi tạo hồ sơ Flow và baseline | lint PASS; build PASS; test FAIL đã ghi nhận |
+| `FLOW-001` | Đóng gate brownfield assessment | `flow assess` PASS |
