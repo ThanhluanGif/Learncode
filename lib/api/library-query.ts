@@ -1,4 +1,4 @@
-import { and, eq, like, or } from "drizzle-orm";
+import { eq, like, or } from "drizzle-orm";
 import { examPapers, problems } from "../../db/schema.ts";
 
 export function buildLibraryFilters(searchParams: URLSearchParams) {

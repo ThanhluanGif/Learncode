@@ -1,21 +1,27 @@
-export function validatePilotFeedback(payload: any) {
-  if (!payload.role || !["student", "teacher"].includes(payload.role)) {
+export function validatePilotFeedback(payload: unknown) {
+  if (!payload || typeof payload !== "object") throw new Error("Invalid payload");
+  const feedback = payload as Record<string, unknown>;
+
+  if (typeof feedback.role !== "string" || !["student", "teacher"].includes(feedback.role)) {
     throw new Error("Invalid role");
   }
-  if (typeof payload.rating !== "number" || payload.rating < 1 || payload.rating > 5) {
+  if (typeof feedback.rating !== "number" || feedback.rating < 1 || feedback.rating > 5) {
     throw new Error("Invalid rating");
   }
-  if (typeof payload.minutesSpent !== "number" || payload.minutesSpent < 1 || payload.minutesSpent > 180) {
+  if (typeof feedback.minutesSpent !== "number" || feedback.minutesSpent < 1 || feedback.minutesSpent > 180) {
     throw new Error("Invalid minutesSpent");
   }
-  if (payload.comment && payload.comment.length > 1000) {
+  if (feedback.comment !== undefined && typeof feedback.comment !== "string") {
+    throw new Error("Invalid comment");
+  }
+  if (typeof feedback.comment === "string" && feedback.comment.length > 1000) {
     throw new Error("Comment too long");
   }
   return {
-    role: payload.role as "student" | "teacher",
-    rating: payload.rating as number,
-    completedCycle: Boolean(payload.completedCycle),
-    minutesSpent: payload.minutesSpent as number,
-    comment: payload.comment?.trim().slice(0, 1000) || "",
+    role: feedback.role as "student" | "teacher",
+    rating: feedback.rating,
+    completedCycle: Boolean(feedback.completedCycle),
+    minutesSpent: feedback.minutesSpent,
+    comment: typeof feedback.comment === "string" ? feedback.comment.trim().slice(0, 1000) : "",
   };
 }

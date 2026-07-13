@@ -18,6 +18,9 @@
 | ERR-012 | P1 | DONE | Compatibility date mới hơn runtime local hỗ trợ |
 | ERR-013 | P0 | DONE | Artifact v3 có binding D1 trùng và đóng gói migration cũ |
 | ERR-014 | P0 | BLOCKED | Sites auth/dispatch của project vẫn trả platform `500` sau incident chung |
+| ERR-015 | P1 | DONE | Code provisional C-002–C-004 làm lint FAIL 5 errors/3 warnings |
+| ERR-016 | P0 | OPEN | C-001–C-004 bị đánh done bằng local evidence thay cho world-state live |
+| ERR-017 | P0 | OPEN | Catalog 2022+B trả zero exams và chưa có đủ mười mùa hoàn chỉnh |
 
 ## Chi tiết
 
@@ -156,3 +159,24 @@
 - Resumed audit lần 3 lúc `2026-07-13 22:26 +07`: cùng metadata hợp lệ và cùng sáu phản hồi platform HTML 500 kích thước 2.563 byte. Blocker đạt ngưỡng ba lượt liên tiếp sau resume; cần quyền kiểm thử access hoặc external-state recovery để tiến thêm.
 - Xử lý hiện tại: giữ version 6 làm bản production dự kiến; không thay đổi access policy, không mở site công khai và không hạ chuẩn live gate.
 - Tiêu chí đóng: incident được khắc phục và production URL trả health `200`, OpenAPI/docs `200`, missing auth `401`, authenticated `/api/me` `200`.
+
+### ERR-015 - Lint regression trong code provisional
+
+- Phát hiện: 2026-07-13 23:00 +07 khi chạy lại test trên HEAD `a2cc203`.
+- Trước sửa: ESLint báo 5 errors/3 warnings, gồm explicit `any`, biến không đổi, import/biến không dùng trong learning, pilot, library và contract verifier.
+- Sửa: validator nhận `unknown` rồi narrow, catch dùng `Error` guard, loại import/biến thừa.
+- Sau sửa: lint PASS, build PASS, product tests PASS 12/12.
+
+### ERR-016 - Done-evidence bị thay bằng local evidence
+
+- Phát hiện: card C-001–C-004 đều `status: done` và check live boxes, nhưng evidence nói rõ dùng local tests hoặc `http://localhost:3001` vì Sites 500.
+- Tác động: dependency chain mở C-005/C-006 dù không card nào có named world-state proof; `QA_CONTRACT_REPORT.md` gọi localhost là deployed URL.
+- Xử lý: hạ C-001–C-004 về `todo`, uncheck live/coverage boxes chưa chứng minh, sửa report thành local/invalidated và dừng C-005.
+- Tiêu chí đóng: mỗi card có đúng live deployed evidence đã định nghĩa; localhost không được dùng làm bằng chứng deploy.
+
+### ERR-017 - Catalog không đáp ứng C-002
+
+- Phát hiện: exact bundle query `/api/library?year=2022&division=B` trả `200` nhưng `exams: []`.
+- Nguyên nhân hiện thấy: baseline và seed cùng dùng fixed IDs nhưng `ON CONFLICT` chỉ update một số trường; dữ liệu thực tế giữ exam 2025 B và 2022 A. Seed chỉ khai báo hai exams, không phải mười mùa 2016–2025.
+- Khoảng trống test: unit tests chỉ kiểm tra `appliedFilters`, không kiểm tra rows thực trả về; contract verifier cũ gọi library không filter.
+- Xử lý: thêm assertion 2022+B vào strict contract verifier; giữ C-002/C-004 `todo` cho đến khi seed/provenance đủ mười mùa và query thật xanh.

@@ -51,8 +51,9 @@ export async function POST(request: Request) {
     let parsed: ReturnType<typeof validatePilotFeedback>;
     try {
       parsed = validatePilotFeedback(payload);
-    } catch (e: any) {
-      return Response.json({ error: { code: "VALIDATION_ERROR", message: e.message } }, { status: 400 });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Invalid pilot feedback";
+      return Response.json({ error: { code: "VALIDATION_ERROR", message } }, { status: 400 });
     }
 
     const [feedback] = await db.insert(pilotFeedback).values({

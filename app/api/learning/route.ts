@@ -5,10 +5,6 @@ import { validateLearningCommand } from "../../../lib/api/learning-commands.ts";
 import { examPapers, learningReflections, problemAttempts, problems, studySessions } from "../../../db/schema";
 import { handledApiError } from "../../../lib/api/errors";
 
-function clamp(value: unknown, min: number, max: number, fallback: number) {
-  return typeof value === "number" && Number.isFinite(value) ? Math.min(max, Math.max(min, Math.round(value))) : fallback;
-}
-
 export async function GET(request: Request) {
   try {
     const learner = await requireCurrentLearner(request.headers);
@@ -31,8 +27,9 @@ export async function POST(request: Request) {
     let payload: ReturnType<typeof validateLearningCommand>;
     try {
       payload = validateLearningCommand(rawPayload);
-    } catch (e: any) {
-      return Response.json({ error: { code: "VALIDATION_ERROR", message: e.message } }, { status: 400 });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Invalid learning command";
+      return Response.json({ error: { code: "VALIDATION_ERROR", message } }, { status: 400 });
     }
     const db = getDb();
 

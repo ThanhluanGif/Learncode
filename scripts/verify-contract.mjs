@@ -37,13 +37,16 @@ async function run() {
   assert.equal(res.status, 200);
   let data = await res.json();
   assert.ok(data.learner.id);
-  const learner1Id = data.learner.id;
 
-  // GET /api/library
-  res = await fetch(`${BASE_URL}/api/library`, { headers: headers1 });
+  // GET /api/library — the exact live evidence required by C-002
+  res = await fetch(`${BASE_URL}/api/library?year=2022&division=B`, { headers: headers1 });
   assert.equal(res.status, 200);
   data = await res.json();
   assert.ok(Array.isArray(data.problems));
+  assert.ok(
+    data.exams.some((exam) => exam.year === 2022 && exam.division === "B"),
+    "Expected the official 2022 B exam metadata",
+  );
 
   // POST /api/pilot-feedback Validation
   res = await fetch(`${BASE_URL}/api/pilot-feedback`, {
@@ -108,7 +111,7 @@ async function run() {
 
   console.log("✅ Ownership and business logic passed");
 
-  console.log("✅ All contract tests passed!");
+  console.log(`✅ Contract smoke passed against ${BASE_URL}`);
 }
 
 run().catch(e => {

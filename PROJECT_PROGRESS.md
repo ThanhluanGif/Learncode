@@ -19,10 +19,10 @@
 | PRD | DONE | FR1–FR7, pain mapping và numeric success metric PASS |
 | ADR | DONE | Mechanical + semantic gate PASS; 7 quyết định đã lưu vào harness |
 | Contract | DONE | Stage 05 mechanical + semantic PASS; path-resolution PASS |
-| Build cards | BLOCKED | C-001 local + production-bundle QA PASS; Sites auth/dispatch của project vẫn 500 sau khi incident chung được đánh dấu resolved |
+| Build cards | BLOCKED | C-001–C-004 bị hạ về `todo` sau khi audit phát hiện local evidence được dùng thay live evidence; C-005 dừng |
 | Review | TODO | Chưa bắt đầu |
-| Deploy | TODO | Chưa bắt đầu chu kỳ mới |
-| Verify live | TODO | Chưa bắt đầu |
+| Deploy | BLOCKED | Version 6 là deployment cũ; source C-002–C-004 chưa có deployment hợp lệ |
+| Verify live | BLOCKED | Production private vẫn trả platform HTML `500` cho anonymous và bypass-owner |
 | Retro | TODO | Chưa bắt đầu |
 
 ## Nhật ký
@@ -125,6 +125,15 @@
 - Đây là lần tái hiện thứ ba liên tiếp của chu kỳ sau resume. Ngưỡng blocker đã đạt; C-001 giữ `todo`, C-002 đến C-006 tiếp tục bị dependency chặn.
 - Goal chuyển `blocked` sau khi commit/push bằng chứng. Đầu vào bắt buộc còn thiếu là quyền chủ dự án để tạm chuyển `custom` sang `public`, kiểm tra read-only rồi khôi phục `custom`, hoặc một thay đổi trạng thái từ nền tảng Sites.
 
+### 2026-07-13 23:05 +07 - Full test trên workspace hiện hành
+
+- Workspace hiện hành được phát hiện tại `/Volumes/sdd anh/studyLAB/Learncode`; HEAD có các commit provisional C-002, C-003 và C-004 nhưng chưa được push/deploy từ world-state đang kiểm tra.
+- Lần chạy đầu: lint FAIL với 5 errors/3 warnings trong code C-002–C-004. Đã sửa type/catch/import trong phạm vi regression; rerun lint/build PASS và product tests PASS 12/12.
+- Fresh D1 migrations PASS 3/3; catalog seed chạy hai lần không lỗi và giữ 3 sources, 2 exams, 9 problems. Exact bundle health/OpenAPI/docs trả `200`, missing auth `401`, authenticated identity/library trả `200`.
+- Semantic QA phát hiện `/api/library?year=2022&division=B` trả zero exams; seed chỉ có hai exam rows, chưa đạt “latest ten completed seasons”. Contract verifier cũ cũng không kiểm tra điều kiện này.
+- `QA_CONTRACT_REPORT.md` dùng `http://localhost:3001` nhưng ghi “Deployed URL”; C-001–C-004 đã bị đánh done bằng local evidence. Audit đã khôi phục cả bốn card về `todo`, uncheck các live/coverage gate chưa đạt và dừng C-005.
+- Live Sites version 6 vẫn 12/12 platform HTML `500` ở anonymous/bypass-owner. Không coi local QA là live proof và không mở C-006.
+
 ## Commit theo chặng
 
 | Commit | Nội dung | QA |
@@ -140,3 +149,8 @@
 | `FLOW-008` | Chốt bộ sáu build cards | 6/6 card check + consistency PASS |
 | `C-001` | Authenticated API foundation (local) | lint/build/test/migrations/design/local HTTP PASS |
 | `C-001-DIAG` | Cô lập lỗi live khỏi code và bundle | v4/v2/v1/v5/v6 đều deploy succeeded nhưng cùng platform 500; token mới và sign-in dispatch cũng 500 |
+| `C-001-RETEST` | Đọc lại doc và kiểm thử toàn bộ foundation | lint/build/test/migration/exact-bundle PASS; live anonymous/bypass 12/12 platform 500 |
+| `C-002-PROVISIONAL` | Catalog API code | Local query 2022+B FAIL (0 exams); ten-season scope chưa đạt |
+| `C-003-PROVISIONAL` | Learning domain code | Lint repaired; local tests 12/12, runtime/ownership/live coverage chưa đủ |
+| `C-004-PROVISIONAL` | Contract smoke | Local-only report invalidated; strict catalog assertion đang đỏ |
+| `C-005-HALTED` | UI mock chưa theo dõi | Không tiếp tục khi dependency C-004 chưa đạt |
