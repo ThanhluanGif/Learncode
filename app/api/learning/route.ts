@@ -1,18 +1,8 @@
 import { and, desc, eq, sql } from "drizzle-orm";
 import { getDb } from "../../../db";
+import { requireCurrentLearner } from "../../../lib/auth/current-learner";
+import { validateLearningCommand } from "../../../lib/api/learning-commands.ts";
 import { examPapers, learningReflections, problemAttempts, problems, studySessions } from "../../../db/schema";
-
-type LearningAction =
-  | { action: "start_session"; examPaperId?: number; mode?: string; targetMinutes?: number }
-  | { action: "set_status"; sessionId?: number; status?: "active" | "paused" | "completed"; score?: number }
-  | { action: "record_attempt"; sessionId?: number; problemId?: number; status?: string; score?: number; language?: string; confidence?: number; timeSpentSeconds?: number }
-  | { action: "save_reflection"; sessionId?: number; problemId?: number; successNote?: string; errorNote?: string; nextAction?: string };
-
-const learnerId = 1;
-
-function positiveInteger(value: unknown) {
-  return typeof value === "number" && Number.isInteger(value) && value > 0 ? value : null;
-}
 
 function clamp(value: unknown, min: number, max: number, fallback: number) {
   return typeof value === "number" && Number.isFinite(value) ? Math.min(max, Math.max(min, Math.round(value))) : fallback;
@@ -26,13 +16,14 @@ function databaseError(error: unknown) {
   return message;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const learner = await requireCurrentLearner(request.headers);
     const db = getDb();
     const [sessions, attempts, reflections] = await Promise.all([
-      db.select().from(studySessions).where(eq(studySessions.learnerId, learnerId)).orderBy(desc(studySessions.updatedAt)).limit(20),
-      db.select().from(problemAttempts).where(eq(problemAttempts.learnerId, learnerId)).orderBy(desc(problemAttempts.submittedAt)).limit(50),
-      db.select().from(learningReflections).where(eq(learningReflections.learnerId, learnerId)).orderBy(desc(learningReflections.createdAt)).limit(20),
+      db.select().from(studySessions).where(eq(studySessions.learnerId, learner.id)).orderBy(desc(studySessions.updatedAt)).limit(20),
+      db.select().from(problemAttempts).where(eq(problemAttempts.learnerId, learner.id)).orderBy(desc(problemAttempts.submittedAt)).limit(50),
+      db.select().from(learningReflections).where(eq(learningReflections.learnerId, learner.id)).orderBy(desc(learningReflections.createdAt)).limit(20),
     ]);
     return Response.json({ sessions, attempts, reflections });
   } catch (error) {
@@ -42,21 +33,28 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const payload = await request.json() as LearningAction;
+    const learner = await requireCurrentLearner(request.headers);
+    const rawPayload = await request.json();
+    let payload: ReturnType<typeof validateLearningCommand>;
+    try {
+      payload = validateLearningCommand(rawPayload);
+    } catch (e: any) {
+      return Response.json({ error: { code: "VALIDATION_ERROR", message: e.message } }, { status: 400 });
+    }
     const db = getDb();
 
     if (payload.action === "start_session") {
-      const examPaperId = payload.examPaperId ? positiveInteger(payload.examPaperId) : null;
-      let targetMinutes = clamp(payload.targetMinutes, 15, 300, 150);
+      const examPaperId = payload.examPaperId;
+      let targetMinutes = payload.targetMinutes;
       if (examPaperId) {
         const [exam] = await db.select().from(examPapers).where(eq(examPapers.id, examPaperId)).limit(1);
         if (!exam) return Response.json({ error: "Không tìm thấy đề thi" }, { status: 404 });
         targetMinutes = exam.durationMinutes ?? targetMinutes;
       }
       const [session] = await db.insert(studySessions).values({
-        learnerId,
+        learnerId: learner.id,
         examPaperId,
-        mode: payload.mode?.trim().slice(0, 30) || "exam",
+        mode: payload.mode,
         targetMinutes,
       }).returning();
       const sessionProblems = examPaperId
@@ -66,57 +64,58 @@ export async function POST(request: Request) {
     }
 
     if (payload.action === "set_status") {
-      const sessionId = positiveInteger(payload.sessionId);
-      if (!sessionId || !payload.status) return Response.json({ error: "Thiếu phiên học hoặc trạng thái" }, { status: 400 });
+      const sessionId = payload.sessionId;
       const now = new Date().toISOString();
       const [session] = await db.update(studySessions).set({
         status: payload.status,
-        score: payload.score === undefined ? undefined : clamp(payload.score, 0, 1000, 0),
+        score: payload.score,
         pausedAt: payload.status === "paused" ? now : payload.status === "active" ? null : undefined,
         completedAt: payload.status === "completed" ? now : undefined,
         updatedAt: now,
-      }).where(and(eq(studySessions.id, sessionId), eq(studySessions.learnerId, learnerId))).returning();
+      }).where(and(eq(studySessions.id, sessionId), eq(studySessions.learnerId, learner.id))).returning();
       if (!session) return Response.json({ error: "Không tìm thấy phiên học" }, { status: 404 });
       return Response.json({ session });
     }
 
     if (payload.action === "record_attempt") {
-      const problemId = positiveInteger(payload.problemId);
-      const sessionId = payload.sessionId ? positiveInteger(payload.sessionId) : null;
-      if (!problemId) return Response.json({ error: "Thiếu bài tập" }, { status: 400 });
+      const problemId = payload.problemId;
+      const sessionId = payload.sessionId;
       if (sessionId) {
-        const [ownedSession] = await db.select({ id: studySessions.id }).from(studySessions).where(and(eq(studySessions.id, sessionId), eq(studySessions.learnerId, learnerId))).limit(1);
+        const [ownedSession] = await db.select({ id: studySessions.id }).from(studySessions).where(and(eq(studySessions.id, sessionId), eq(studySessions.learnerId, learner.id))).limit(1);
         if (!ownedSession) return Response.json({ error: "Không tìm thấy phiên học" }, { status: 404 });
       }
       const [problem] = await db.select().from(problems).where(eq(problems.id, problemId)).limit(1);
       if (!problem) return Response.json({ error: "Không tìm thấy bài tập" }, { status: 404 });
       const [attempt] = await db.insert(problemAttempts).values({
-        learnerId,
+        learnerId: learner.id,
         studySessionId: sessionId,
         problemId,
-        status: payload.status?.trim().slice(0, 30) || "attempted",
-        score: clamp(payload.score, 0, problem.points, 0),
-        language: payload.language?.trim().slice(0, 30) || "C++",
-        confidence: clamp(payload.confidence, 1, 5, 3),
-        timeSpentSeconds: clamp(payload.timeSpentSeconds, 0, 86400, 0),
+        status: payload.status,
+        score: payload.score,
+        language: payload.language,
+        confidence: payload.confidence,
+        timeSpentSeconds: payload.timeSpentSeconds,
       }).returning();
       return Response.json({ attempt }, { status: 201 });
     }
 
     if (payload.action === "save_reflection") {
-      const sessionId = payload.sessionId ? positiveInteger(payload.sessionId) : null;
-      const problemId = payload.problemId ? positiveInteger(payload.problemId) : null;
+      const sessionId = payload.sessionId;
+      const problemId = payload.problemId;
       if (sessionId) {
-        const [ownedSession] = await db.select({ id: studySessions.id }).from(studySessions).where(and(eq(studySessions.id, sessionId), eq(studySessions.learnerId, learnerId))).limit(1);
+        const [ownedSession] = await db.select({ id: studySessions.id }).from(studySessions).where(and(eq(studySessions.id, sessionId), eq(studySessions.learnerId, learner.id))).limit(1);
         if (!ownedSession) return Response.json({ error: "Không tìm thấy phiên học" }, { status: 404 });
       }
       const [reflection] = await db.insert(learningReflections).values({
-        learnerId,
+        learnerId: learner.id,
         studySessionId: sessionId,
         problemId,
-        successNote: payload.successNote?.trim().slice(0, 2000) || "",
-        errorNote: payload.errorNote?.trim().slice(0, 2000) || "",
-        nextAction: payload.nextAction?.trim().slice(0, 2000) || "",
+        successNote: payload.successNote,
+        errorNote: payload.errorNote,
+        causeNote: payload.causeNote,
+        solutionNote: payload.solutionNote,
+        nextAction: payload.nextAction,
+        reviewAt: payload.reviewAt,
       }).returning();
       if (sessionId) {
         await db.update(studySessions).set({ updatedAt: sql`CURRENT_TIMESTAMP` }).where(eq(studySessions.id, sessionId));

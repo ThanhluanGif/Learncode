@@ -110,7 +110,10 @@ export const learningReflections = sqliteTable("learning_reflections", {
   problemId: integer("problem_id").references(() => problems.id, { onDelete: "set null" }),
   successNote: text("success_note").notNull().default(""),
   errorNote: text("error_note").notNull().default(""),
+  causeNote: text("cause_note").notNull().default(""),
+  solutionNote: text("solution_note").notNull().default(""),
   nextAction: text("next_action").notNull().default(""),
+  reviewAt: text("review_at"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [
   index("learning_reflections_learner_idx").on(table.learnerId, table.createdAt),
@@ -123,4 +126,18 @@ export const savedProblems = sqliteTable("saved_problems", {
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [
   uniqueIndex("saved_problems_learner_problem_unique").on(table.learnerId, table.problemId),
+]);
+
+export const pilotFeedback = sqliteTable("pilot_feedback", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  learnerId: integer("learner_id").notNull().references(() => learners.id, { onDelete: "cascade" }),
+  role: text("role").notNull(),
+  rating: integer("rating").notNull(),
+  completedCycle: integer("completed_cycle", { mode: "boolean" }).notNull(),
+  minutesSpent: integer("minutes_spent").notNull(),
+  comment: text("comment").notNull().default(""),
+  submittedAt: text("submitted_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+  index("pilot_feedback_learner_idx").on(table.learnerId),
+  uniqueIndex("pilot_feedback_learner_unique").on(table.learnerId),
 ]);

@@ -71,7 +71,7 @@ test("serves every planned interface in the OpenAPI document", () => {
 test("keeps a versioned migration for the learner identity key", async () => {
   const migrationRoot = new URL("../drizzle/", import.meta.url);
   const files = (await readdir(migrationRoot)).filter((file) => file.endsWith(".sql")).sort();
-  assert.equal(files.length, 2, "expected baseline and identity migrations");
+  assert.ok(files.length >= 2, "expected at least baseline and identity migrations");
   const [baseline, identity] = await Promise.all(files.map((file) => readFile(new URL(file, migrationRoot), "utf8")));
   assert.match(baseline, /CREATE TABLE `learners`/);
   assert.match(identity, /ALTER TABLE `learners` ADD `email` text/);
