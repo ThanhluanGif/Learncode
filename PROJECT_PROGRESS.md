@@ -125,14 +125,48 @@
 - Đây là lần tái hiện thứ ba liên tiếp của chu kỳ sau resume. Ngưỡng blocker đã đạt; C-001 giữ `todo`, C-002 đến C-006 tiếp tục bị dependency chặn.
 - Goal chuyển `blocked` sau khi commit/push bằng chứng. Đầu vào bắt buộc còn thiếu là quyền chủ dự án để tạm chuyển `custom` sang `public`, kiểm tra read-only rồi khôi phục `custom`, hoặc một thay đổi trạng thái từ nền tảng Sites.
 
+### 2026-07-13 22:30 +07 - New resume cycle audit 1/3
+
+- Người dùng tiếp tục lại toàn bộ mục tiêu C-001 đến C-006 nhưng chưa cấp quyền thay đổi access; chu kỳ blocker sau resume được bắt đầu lại từ lần thứ nhất.
+- Sites vẫn `active`, version 6, access `custom` revision `1`, một allowed user, không group và có đủ auth client/bypass token. Sáu route tiếp tục trả cùng platform HTML `500`, 2.563 byte.
+- Giữ site private, C-001 `todo` và các card sau chờ dependency. Không redeploy vì source ứng dụng và artifact không thay đổi.
+
+### 2026-07-13 22:35 +07 - New resume cycle audit 2/3
+
+- Chạy ma trận 12 live request: anonymous và bypass-owner trên `/`, `/openapi.json`, `/docs`, `/api/health`, `/api/me`, `/signin-with-chatgpt?return_to=%2F`.
+- Cả 12 request cùng trả `500 text/html; charset=utf-8`, kích thước 2.563 byte và trang “Something went wrong”; token bypass không đi được tới Worker contract.
+- Đây là lần tái hiện thứ hai của chu kỳ mới. Không có code/artifact thay đổi để triển khai lại; giữ access `custom`, version 6 và C-001 `todo`.
+
+### 2026-07-13 22:42 +07 - Full doc/code retest và audit 3/3
+
+- Đọc lại toàn bộ đặc tả triển khai 630 dòng, PRD, interface contract, C-001 đến C-006 và ba báo cáo. Chuỗi card vẫn khớp phạm vi v1: foundation -> catalog 10 năm -> learning domain -> contract QA -> mock approval -> production UI.
+- QA code tại thời điểm đó: lint PASS, build PASS, test 4/4; fresh D1 áp dụng `0000` + `0001`, có cột `learners.email`. Exact production bundle với D1 trả health/OpenAPI/docs `200`, thiếu identity `/api/me` `401`, có identity `200`.
+- Live QA private chạy 12 request anonymous/bypass-owner; cả 12 cùng trả platform HTML `500`, 2.563 byte. Đây là lần thứ ba của chu kỳ mới, nên blocker đạt ngưỡng trở lại.
+- Không có thay đổi source ứng dụng để tạo version mới. C-001 giữ `todo`; bước bắt buộc vẫn là quyền tạm kiểm thử `public` hoặc Sites external-state recovery.
+
+### 2026-07-13 22:51 +07 - Đối chiếu cấu trúc doc và resume audit 1/3
+
+- Đọc cấu trúc `PROJECT_PLAN.md` và tài liệu trong `docs/`, đồng thời đối chiếu với đặc tả 630 dòng, PRD, ADR, contract, cards và repository hiện tại.
+- Bộ doc mới mô tả kiến trúc mở rộng Next.js 15/PostgreSQL/Redis/BullMQ/NextAuth/Vercel/Judge/AI; code thực tế dùng Next.js 16.2.6, D1, Sites identity và Cloudflare Workers. ADR v1 chủ động loại judge/contest khỏi phạm vi và dùng Online Judge ngoài.
+- Quyết định Flow hiện hành: `flow/03-prd.md`, `flow/04-adr.md`, `flow/05-contract.md` và C-001 đến C-006 vẫn là nguồn triển khai đã gate. Bộ doc mới được xem là target architecture chưa phê duyệt, không được dùng để đổi stack giữa C-001.
+- Live resume audit 1/3 lúc 22:51 chạy 12 request anonymous/bypass-owner; cả 12 tiếp tục platform HTML `500`, 2.563 byte. Giữ C-001 `todo`, không deploy artifact trùng và không mở C-002.
+
 ### 2026-07-13 23:05 +07 - Full test trên workspace hiện hành
 
-- Workspace hiện hành được phát hiện tại `/Volumes/sdd anh/studyLAB/Learncode`; HEAD có các commit provisional C-002, C-003 và C-004 nhưng chưa được push/deploy từ world-state đang kiểm tra.
+- Workspace hiện hành được phát hiện tại `/Volumes/sdd anh/studyLAB/Learncode`; history có các commit provisional C-002, C-003 và C-004 đã được push nhưng chưa có deployment hợp lệ.
 - Lần chạy đầu: lint FAIL với 5 errors/3 warnings trong code C-002–C-004. Đã sửa type/catch/import trong phạm vi regression; rerun lint/build PASS và product tests PASS 12/12.
 - Fresh D1 migrations PASS 3/3; catalog seed chạy hai lần không lỗi và giữ 3 sources, 2 exams, 9 problems. Exact bundle health/OpenAPI/docs trả `200`, missing auth `401`, authenticated identity/library trả `200`.
 - Semantic QA phát hiện `/api/library?year=2022&division=B` trả zero exams; seed chỉ có hai exam rows, chưa đạt “latest ten completed seasons”. Contract verifier cũ cũng không kiểm tra điều kiện này.
 - `QA_CONTRACT_REPORT.md` dùng `http://localhost:3001` nhưng ghi “Deployed URL”; C-001–C-004 đã bị đánh done bằng local evidence. Audit đã khôi phục cả bốn card về `todo`, uncheck các live/coverage gate chưa đạt và dừng C-005.
 - Live Sites version 6 vẫn 12/12 platform HTML `500` ở anonymous/bypass-owner. Không coi local QA là live proof và không mở C-006.
+
+### 2026-07-13 23:17 +07 - QA lại sau hợp nhất tài liệu
+
+- Khôi phục đầy đủ các audit 22:30–22:51 vào card C-001 và ba báo cáo; phân loại bộ `PROJECT_PLAN.md`/`docs/` đã merge là target architecture chưa qua gate, còn Flow v1 là nguồn triển khai hiện hành.
+- `npm run lint` PASS; `npm test` PASS 12/12; `npm run build` PASS. Cross-artifact consistency PASS 7/7 FR và `flow check` PASS cho C-001–C-004 ở trạng thái `todo`.
+- Fresh D1 migrations PASS 3/3 và seed thành công. Truy vấn schema xác nhận 3 sources, 2 exams, 9 problems; hai exam rows vẫn bị drift: `2025/B` mang title 2022 và `2022/A` mang title 2023.
+- Exact production bundle trả OpenAPI `200`, năm protected route thiếu auth đều `401`, authenticated `/api/me` và library đều `200`. Strict verifier dừng đúng tại assertion “Expected the official 2022 B exam metadata”.
+- Không deploy code provisional vì C-002/C-004 đang đỏ và C-001 chưa có live proof; tránh tạo thêm version không thể qua gate.
 
 ## Commit theo chặng
 
@@ -154,3 +188,4 @@
 | `C-003-PROVISIONAL` | Learning domain code | Lint repaired; local tests 12/12, runtime/ownership/live coverage chưa đủ |
 | `C-004-PROVISIONAL` | Contract smoke | Local-only report invalidated; strict catalog assertion đang đỏ |
 | `C-005-HALTED` | UI mock chưa theo dõi | Không tiếp tục khi dependency C-004 chưa đạt |
+| `QA-20260713-2317` | QA lại sau merge docs/report | lint/build PASS; tests 12/12; Flow consistency/check PASS; strict 2022+B RED đúng |

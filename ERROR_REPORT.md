@@ -18,9 +18,12 @@
 | ERR-012 | P1 | DONE | Compatibility date mới hơn runtime local hỗ trợ |
 | ERR-013 | P0 | DONE | Artifact v3 có binding D1 trùng và đóng gói migration cũ |
 | ERR-014 | P0 | BLOCKED | Sites auth/dispatch của project vẫn trả platform `500` sau incident chung |
-| ERR-015 | P1 | DONE | Code provisional C-002–C-004 làm lint FAIL 5 errors/3 warnings |
-| ERR-016 | P0 | OPEN | C-001–C-004 bị đánh done bằng local evidence thay cho world-state live |
-| ERR-017 | P0 | OPEN | Catalog 2022+B trả zero exams và chưa có đủ mười mùa hoàn chỉnh |
+| ERR-015 | P2 | DONE | Lệnh retest migration dùng sai database selector nên không đọc migrations config |
+| ERR-016 | P1 | OPEN | Bộ tài liệu kiến trúc mới mâu thuẫn với Flow v1 và code đang chạy |
+| ERR-017 | P1 | DONE | Code provisional C-002–C-004 làm lint FAIL 5 errors/3 warnings |
+| ERR-018 | P0 | OPEN | C-001–C-004 bị đánh done bằng local evidence thay cho world-state live |
+| ERR-019 | P0 | OPEN | Catalog 2022+B trả zero exams và chưa có đủ mười mùa hoàn chỉnh |
+| ERR-020 | P3 | DONE | Truy vấn đếm QA dùng nhầm bảng `sources` thay vì `content_sources` |
 
 ## Chi tiết
 
@@ -160,23 +163,47 @@
 - Xử lý hiện tại: giữ version 6 làm bản production dự kiến; không thay đổi access policy, không mở site công khai và không hạ chuẩn live gate.
 - Tiêu chí đóng: incident được khắc phục và production URL trả health `200`, OpenAPI/docs `200`, missing auth `401`, authenticated `/api/me` `200`.
 
-### ERR-015 - Lint regression trong code provisional
+### ERR-015 - Sai database selector trong lệnh retest migration
+
+- Phát hiện: 2026-07-13 khi kiểm thử lại toàn bộ C-001 theo tài liệu.
+- Trước sửa: gọi `wrangler d1 migrations list tin-hoc-tre-db` trong khi config khai báo binding `DB`/database `site-creator-d1`; Wrangler tìm thư mục `migrations/` mặc định và thoát lỗi.
+- Nguyên nhân: lệnh QA dùng tên database không thuộc `wrangler.local.jsonc`, không phải lỗi migration hoặc dữ liệu ứng dụng.
+- Sửa: đặt `--config wrangler.local.jsonc` trước subcommand, dùng binding `DB` và một `--persist-to` fresh.
+- Sau sửa: Wrangler áp dụng thành công `0000` + `0001`; migration ledger có đủ hai bản ghi và `PRAGMA table_info(learners)` xác nhận cột `email`.
+
+### ERR-016 - Kiến trúc tài liệu mới lệch Flow v1
+
+- Phát hiện: 2026-07-13 khi đọc lại cấu trúc doc theo yêu cầu.
+- Tài liệu mới: `PROJECT_PLAN.md` và `docs/*.md` mô tả Next.js 15, PostgreSQL, Redis, BullMQ, NextAuth, Vercel, Docker judge, WebSocket và Gemini.
+- World-state repository: Next.js 16.2.6, Drizzle+D1 binding `DB`, Sites identity, Cloudflare Workers; không có dependency PostgreSQL/Redis/BullMQ/Socket.io/NextAuth/Gemini hay Docker Compose.
+- Xung đột phạm vi: ADR v1 chọn D1/Sites và PRD v1 dùng Online Judge ngoài, chủ động hoãn sandbox/judge/contest sang v2; API contract mới cũng khác `flow/05-contract.md` đã gate.
+- Xử lý hiện tại: bộ doc đã được merge ở commit `5d6ca41` nhưng được phân loại là target architecture chưa qua gate; tiếp tục code theo Flow artifacts v1 đã duyệt và ghi drift vào ba báo cáo.
+- Tiêu chí đóng: chủ dự án xác nhận bộ doc mới là roadmap v2 hoặc phê duyệt một ADR/scope/card migration riêng; sau đó đồng bộ stack, API và workflow về một nguồn chuẩn.
+
+### ERR-017 - Lint regression trong code provisional
 
 - Phát hiện: 2026-07-13 23:00 +07 khi chạy lại test trên HEAD `a2cc203`.
 - Trước sửa: ESLint báo 5 errors/3 warnings, gồm explicit `any`, biến không đổi, import/biến không dùng trong learning, pilot, library và contract verifier.
 - Sửa: validator nhận `unknown` rồi narrow, catch dùng `Error` guard, loại import/biến thừa.
 - Sau sửa: lint PASS, build PASS, product tests PASS 12/12.
 
-### ERR-016 - Done-evidence bị thay bằng local evidence
+### ERR-018 - Done-evidence bị thay bằng local evidence
 
 - Phát hiện: card C-001–C-004 đều `status: done` và check live boxes, nhưng evidence nói rõ dùng local tests hoặc `http://localhost:3001` vì Sites 500.
 - Tác động: dependency chain mở C-005/C-006 dù không card nào có named world-state proof; `QA_CONTRACT_REPORT.md` gọi localhost là deployed URL.
 - Xử lý: hạ C-001–C-004 về `todo`, uncheck live/coverage boxes chưa chứng minh, sửa report thành local/invalidated và dừng C-005.
 - Tiêu chí đóng: mỗi card có đúng live deployed evidence đã định nghĩa; localhost không được dùng làm bằng chứng deploy.
 
-### ERR-017 - Catalog không đáp ứng C-002
+### ERR-019 - Catalog không đáp ứng C-002
 
 - Phát hiện: exact bundle query `/api/library?year=2022&division=B` trả `200` nhưng `exams: []`.
 - Nguyên nhân hiện thấy: baseline và seed cùng dùng fixed IDs nhưng `ON CONFLICT` chỉ update một số trường; dữ liệu thực tế giữ exam 2025 B và 2022 A. Seed chỉ khai báo hai exams, không phải mười mùa 2016–2025.
 - Khoảng trống test: unit tests chỉ kiểm tra `appliedFilters`, không kiểm tra rows thực trả về; contract verifier cũ gọi library không filter.
 - Xử lý: thêm assertion 2022+B vào strict contract verifier; giữ C-002/C-004 `todo` cho đến khi seed/provenance đủ mười mùa và query thật xanh.
+- Tái kiểm chứng 23:17 +07: fresh D1 có 3 sources/2 exams/9 problems; exact bundle qua OpenAPI/auth nhưng strict verifier tiếp tục dừng đúng tại metadata 2022 B.
+
+### ERR-020 - Truy vấn đếm QA dùng sai tên bảng
+
+- Phát hiện: 2026-07-13 23:16 +07 sau khi migrations 3/3 và seed đã chạy thành công, câu diagnostic `COUNT(*) FROM sources` trả `no such table`.
+- Nguyên nhân: schema thật đặt tên `content_sources`; lỗi chỉ nằm trong lệnh kiểm tra ad-hoc, không nằm trong migration hay ứng dụng.
+- Sửa và bằng chứng: chạy lại trên cùng fresh persist với `content_sources`, nhận 3 sources, 2 exams và 9 problems; truy vấn chi tiết hai exam rows thành công.
