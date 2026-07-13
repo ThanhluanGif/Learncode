@@ -47,3 +47,4 @@ Một lỗi chỉ được chuyển sang `DONE` khi có đủ:
 - `DBG-009` blocked audit (`2026-07-13 22:09 +07`): lần kiểm tra thứ ba tiếp tục platform 500 trên sáu route. Không thể tiến thêm nếu không có external-state recovery hoặc quyền tạm thay đổi access policy; trạng thái goal đủ điều kiện chuyển `blocked`.
 - `DBG-009` resumed audit 1/3 (`2026-07-13 22:19 +07`): sáu route vẫn trả platform HTML 500 qua bypass token. Không thay đổi access `custom` và không redeploy artifact giống hệt; chu kỳ blocker sau resume hiện ở lần thứ nhất.
 - `DBG-009` resumed audit 2/3 (`2026-07-13 22:25 +07`): Sites metadata vẫn active/custom và đầy đủ auth; probe ẩn danh trên sáu route cùng trả platform HTML 500 kích thước 2.563 byte. Chu kỳ blocker sau resume hiện ở lần thứ hai.
+- `DBG-009` resumed audit 3/3 (`2026-07-13 22:26 +07`): cùng metadata hợp lệ và sáu route cùng platform HTML 500. Chu kỳ sau resume đã đạt ngưỡng blocker; chờ quyền tạm kiểm thử public hoặc thay đổi trạng thái nền tảng.

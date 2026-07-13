@@ -119,6 +119,12 @@
 - Probe ẩn danh trên sáu route trả cùng `500 text/html; charset=utf-8`, kích thước 2.563 byte và trang nền tảng “Something went wrong”.
 - Đây là lần tái hiện thứ hai liên tiếp sau resume. Giữ C-001 `todo`, không mở C-002 và không thay đổi access khi chưa có quyền rõ ràng.
 
+### 2026-07-13 22:26 +07 - Resumed blocked audit 3/3
+
+- Metadata tiếp tục không đổi và hợp lệ; cả sáu route lại trả cùng `500 text/html`, 2.563 byte, từ lớp Sites trước khi Worker phục vụ contract.
+- Đây là lần tái hiện thứ ba liên tiếp của chu kỳ sau resume. Ngưỡng blocker đã đạt; C-001 giữ `todo`, C-002 đến C-006 tiếp tục bị dependency chặn.
+- Goal chuyển `blocked` sau khi commit/push bằng chứng. Đầu vào bắt buộc còn thiếu là quyền chủ dự án để tạm chuyển `custom` sang `public`, kiểm tra read-only rồi khôi phục `custom`, hoặc một thay đổi trạng thái từ nền tảng Sites.
+
 ## Commit theo chặng
 
 | Commit | Nội dung | QA |

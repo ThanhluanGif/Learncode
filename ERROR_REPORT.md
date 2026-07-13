@@ -153,5 +153,6 @@
 - Goal-loop lần ba lúc `2026-07-13 22:09 +07`: sáu route tiếp tục platform 500, đáp ứng ngưỡng blocker ba lượt liên tiếp. Bước chẩn đoán còn lại cần quyền chủ dự án để tạm chuyển access `custom` -> `public` -> kiểm tra -> khôi phục `custom`.
 - Resumed audit lần 1 lúc `2026-07-13 22:19 +07`: sau khi người dùng yêu cầu tiếp tục, cả sáu route vẫn platform 500 với bypass token hiện hành. Site được giữ ở `custom`; chưa có quyền rõ ràng để thực hiện phép thử `public` tạm thời.
 - Resumed audit lần 2 lúc `2026-07-13 22:25 +07`: metadata vẫn active/custom với auth client và token đầy đủ; probe ẩn danh trên cả sáu route cùng trả `500 text/html`, 2.563 byte. Blocker auth/dispatch tiếp tục tái hiện, chưa có bằng chứng code hoặc artifact thay đổi.
+- Resumed audit lần 3 lúc `2026-07-13 22:26 +07`: cùng metadata hợp lệ và cùng sáu phản hồi platform HTML 500 kích thước 2.563 byte. Blocker đạt ngưỡng ba lượt liên tiếp sau resume; cần quyền kiểm thử access hoặc external-state recovery để tiến thêm.
 - Xử lý hiện tại: giữ version 6 làm bản production dự kiến; không thay đổi access policy, không mở site công khai và không hạ chuẩn live gate.
 - Tiêu chí đóng: incident được khắc phục và production URL trả health `200`, OpenAPI/docs `200`, missing auth `401`, authenticated `/api/me` `200`.
