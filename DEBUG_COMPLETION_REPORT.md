@@ -16,6 +16,7 @@ Chưa có lỗi nào được đóng trong chu kỳ Flow mới. Tệp này chỉ
 | DBG-005 | ERR-010 Drizzle meta | thiếu `_journal.json` | Sinh lại 2 migration + snapshots PASS | DONE |
 | DBG-006 | ERR-011 runtime flags | `nodejs_compat` lặp | Vượt config merge | DONE |
 | DBG-007 | ERR-012 runtime date | date không được hỗ trợ | Dev server + 4 local HTTP checks PASS | DONE |
+| DBG-008 | ERR-013 live runtime package | Live routes `500` | Artifact local đã sửa; chờ redeploy/live QA | OPEN |
 
 ## Quy tắc ghi nhận
 
@@ -37,3 +38,4 @@ Một lỗi chỉ được chuyển sang `DONE` khi có đủ:
 - `DBG-005` (2026-07-13): tái tạo migration store từ thư mục trống thật; Drizzle sinh snapshots hợp lệ.
 - `DBG-006` (2026-07-13): loại cờ runtime bị lặp khỏi Wrangler config.
 - `DBG-007` (2026-07-13): khóa compatibility date theo runtime local; curl xác nhận health `200`, thiếu auth `401`, có auth `200`, OpenAPI 3.1 và docs HTML.
+- `DBG-008` (2026-07-13): phát hiện hai binding `DB` và migration source sai trong artifact v3; artifact sửa còn một binding, đóng gói `0000` + `0001`, lint/build/test 4/4 và fresh migration PASS. Chưa đóng cho đến khi live xanh.

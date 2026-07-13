@@ -68,6 +68,8 @@
 - Migration tương thích cả D1 fresh lẫn brownfield; hai môi trường đều áp dụng `0000` + `0001` thành công.
 - QA cuối local: lint PASS; build PASS; test PASS 4/4; Flow design mechanical + semantic PASS; local HTTP health/auth/OpenAPI/docs PASS.
 - Bước tiếp theo: commit implementation, publish private, lấy live evidence rồi đóng C-001.
+- Deployment v3 tạo thành công nhưng live QA đỏ `500`; C-001 không được làm tròn trạng thái.
+- Root cause: duplicate D1 binding + build lấy sai thư mục migration. Artifact đã sửa và QA local lại PASS; đang chờ commit/redeploy.
 
 ## Commit theo chặng
 
