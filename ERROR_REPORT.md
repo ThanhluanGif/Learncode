@@ -4,8 +4,8 @@
 
 | ID | Mức độ | Trạng thái | Lỗi |
 | --- | --- | --- | --- |
-| ERR-001 | P0 | OPEN | Bộ test vẫn kiểm tra starter skeleton đã bị xóa |
-| ERR-002 | P0 | OPEN | Test Node không tải được module `cloudflare:workers` |
+| ERR-001 | P0 | DONE | Bộ test vẫn kiểm tra starter skeleton đã bị xóa |
+| ERR-002 | P0 | DONE | Test Node không tải được module `cloudflare:workers` |
 | ERR-003 | P0 | OPEN | API gắn cứng mọi dữ liệu học tập vào learner `1` |
 | ERR-004 | P1 | OPEN | Chưa có hợp đồng API được phục vụ tại runtime |
 | ERR-005 | P1 | OPEN | UI trộn dữ liệu tĩnh với dữ liệu D1 |
@@ -16,7 +16,8 @@
 | ERR-010 | P2 | DONE | Drizzle không tái tạo migration khi còn thư mục meta rỗng |
 | ERR-011 | P1 | DONE | Cờ `nodejs_compat` bị khai báo trùng ở Vite và Wrangler |
 | ERR-012 | P1 | DONE | Compatibility date mới hơn runtime local hỗ trợ |
-| ERR-013 | P0 | OPEN | Deployment v3 trả `500` do build có binding D1 trùng và đóng gói migration cũ |
+| ERR-013 | P0 | DONE | Artifact v3 có binding D1 trùng và đóng gói migration cũ |
+| ERR-014 | P0 | BLOCKED | ChatGPT Sites trả platform `500` cho cả các version trước đó từng hoạt động |
 
 ## Chi tiết
 
@@ -28,6 +29,8 @@
 - Nguyên nhân: sản phẩm đã thay starter nhưng `tests/rendered-html.test.mjs` chưa được viết lại.
 - Hướng xử lý: thay bằng test sản phẩm và API thật.
 - Tiêu chí đóng: test không còn tham chiếu `_sites-preview` và kiểm tra đúng nội dung Tin học trẻ LAB.
+- Sửa: xóa test starter, thay bằng `tests/foundation.test.mjs` kiểm tra identity, contract và migration.
+- Bằng chứng đóng: commit `70bcedb`; `npm test` build thành công và PASS 4/4, không còn tham chiếu `_sites-preview`.
 
 ### ERR-002 - Môi trường test sai runtime
 
@@ -37,6 +40,8 @@
 - Nguyên nhân: test import worker trực tiếp bằng Node trong khi worker cần Cloudflare-compatible runtime.
 - Hướng xử lý: kiểm thử route qua môi trường Vinext/Miniflare hoặc tách logic thuần để unit test.
 - Tiêu chí đóng: test route chạy trong runtime tương thích và đạt xanh.
+- Sửa: tách identity resolver thuần để unit test, đồng thời bắt buộc `npm test` chạy production build trước test.
+- Bằng chứng đóng: production bundle chạy trực tiếp bằng Wrangler; `/openapi.json` và `/docs` trả `200`, `/api/me` thiếu identity trả `401`; test PASS 4/4.
 
 ### ERR-003 - Không có ranh giới người dùng
 
@@ -117,11 +122,25 @@
 - Sửa: khóa compatibility date ở `2026-05-22`.
 - Sau sửa: Vinext dev phục vụ thành công tại local; health, auth, OpenAPI và docs đều trả đúng contract.
 
-### ERR-013 - Runtime live lỗi sau deployment v3
+### ERR-013 - Artifact deployment v3 sai binding và migration
 
 - Phát hiện: 2026-07-13 khi live verification C-001.
-- Trước sửa: deployment `succeeded` nhưng `/`, `/api/health`, `/openapi.json`, `/docs`, `/api/me` đều trả HTML `500`.
+- Trước sửa: `dist/server/wrangler.json` có hai binding cùng tên `DB`; archive chỉ có baseline cũ và thiếu identity migration.
 - Nguyên nhân 1: `wrangler.jsonc` được Vite tự nạp cùng inline Cloudflare config, tạo hai binding tên `DB` trong `dist/server/wrangler.json`.
 - Nguyên nhân 2: build plugin lấy migration từ `drizzle/`, trong khi Drizzle config tạm ghi vào `.openai/drizzle`; archive vì vậy chứa baseline cũ và thiếu identity migration.
 - Sửa local: chuyển CLI-only config sang `wrangler.local.jsonc`, trả Drizzle output về `drizzle/`, sinh `0001` identity và kiểm tra artifact chỉ có một binding DB + đủ hai migration.
-- Tiêu chí đóng: deployment mới trả health `200`, OpenAPI/docs `200` và authenticated `/api/me` `200` trên URL live.
+- Bằng chứng đóng: commit `0002eec`; artifact v4 còn đúng một binding `DB`, chứa `0000` + `0001`, chạy được bằng Wrangler và qua lint/build/test/fresh migration.
+- Ghi chú phân loại: live `500` không còn được quy cho artifact này vì rollback sang cả version 2 và version 1 cũng tái hiện cùng lỗi trong lúc ChatGPT Sites có incident chính thức; live gate được theo dõi riêng ở ERR-014.
+
+### ERR-014 - Sự cố runtime/dispatch của ChatGPT Sites
+
+- Phát hiện: 2026-07-13 khi xác minh live C-001 sau deployment v4.
+- Triệu chứng: mọi route trả trang HTML `500` do nền tảng phục vụ, trong khi Sites báo deployment `succeeded`.
+- Phép cô lập:
+  - version 4 (C-001, D1) -> deployment succeeded, platform 500;
+  - version 2 (bản D1 trước C-001, từng hoạt động) -> deployment succeeded, cùng platform 500;
+  - version 1 (không D1) -> deployment succeeded, cùng platform 500;
+  - cùng bundle version 4 chạy qua Wrangler local -> Worker khởi tạo và các route không cần DB trả đúng contract.
+- Bằng chứng ngoài: OpenAI Status đang điều tra [“Elevated errors when creating sites in ChatGPT”](https://status.openai.com/incidents/01KXDMD4T8TM58CSKBN7YFD2CK) đúng thời điểm kiểm thử.
+- Xử lý hiện tại: restore version 4 làm production deployment; không thay đổi access policy và không hạ chuẩn live gate.
+- Tiêu chí đóng: incident được khắc phục và production URL trả health `200`, OpenAPI/docs `200`, missing auth `401`, authenticated `/api/me` `200`.

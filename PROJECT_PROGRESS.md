@@ -19,7 +19,7 @@
 | PRD | DONE | FR1–FR7, pain mapping và numeric success metric PASS |
 | ADR | DONE | Mechanical + semantic gate PASS; 7 quyết định đã lưu vào harness |
 | Contract | DONE | Stage 05 mechanical + semantic PASS; path-resolution PASS |
-| Build cards | IN_PROGRESS | C-001 local implementation + QA PASS; chờ deploy/live evidence |
+| Build cards | BLOCKED | C-001 local + production-bundle QA PASS; live gate bị chặn bởi sự cố ChatGPT Sites đang được OpenAI điều tra |
 | Review | TODO | Chưa bắt đầu |
 | Deploy | TODO | Chưa bắt đầu chu kỳ mới |
 | Verify live | TODO | Chưa bắt đầu |
@@ -69,7 +69,16 @@
 - QA cuối local: lint PASS; build PASS; test PASS 4/4; Flow design mechanical + semantic PASS; local HTTP health/auth/OpenAPI/docs PASS.
 - Bước tiếp theo: commit implementation, publish private, lấy live evidence rồi đóng C-001.
 - Deployment v3 tạo thành công nhưng live QA đỏ `500`; C-001 không được làm tròn trạng thái.
-- Root cause: duplicate D1 binding + build lấy sai thư mục migration. Artifact đã sửa và QA local lại PASS; đang chờ commit/redeploy.
+- Artifact v3 có hai khuyết điểm thật: duplicate D1 binding và build lấy sai thư mục migration. Artifact v4 đã sửa, QA local + production-bundle PASS và deploy thành công.
+
+### 2026-07-13 - C-001 live incident isolation
+
+- Live v4 vẫn trả cùng HTML `500` của nền tảng trên `/`, `/api/health`, `/openapi.json`, `/docs` và `/api/me` dù deployment báo `succeeded`.
+- Chạy chính `dist/server/wrangler.json` bằng Wrangler: Worker khởi tạo thành công; `/openapi.json` và `/docs` trả `200`, `/api/me` thiếu identity trả `401` đúng contract.
+- Rollback kiểm soát sang version 2 từng hoạt động (D1) và version 1 (không D1): cả hai deployment đều `succeeded` nhưng production hostname vẫn trả đúng cùng HTML `500`.
+- OpenAI Status đồng thời công bố sự cố đang điều tra: [Elevated errors when creating sites in ChatGPT](https://status.openai.com/incidents/01KXDMD4T8TM58CSKBN7YFD2CK).
+- Đã restore version 4 làm deployment production hiện tại. C-001 giữ trạng thái chưa hoàn thành; chỉ live gate bị chặn, không có QA local nào còn đỏ.
+- Bước tiếp theo sau khi dịch vụ hồi phục: chạy lại năm live checks, đóng ERR-014/DBG-009, điền done-evidence và gọi `flow card done C-001`.
 
 ## Commit theo chặng
 
@@ -85,3 +94,4 @@
 | `FLOW-007` | Khóa interface contract | Stage 05 + contract path-resolution PASS |
 | `FLOW-008` | Chốt bộ sáu build cards | 6/6 card check + consistency PASS |
 | `C-001` | Authenticated API foundation (local) | lint/build/test/migrations/design/local HTTP PASS |
+| `C-001-DIAG` | Cô lập lỗi live khỏi code và bundle | v4/v2/v1 đều deploy succeeded nhưng cùng platform 500; incident chính thức đang mở |

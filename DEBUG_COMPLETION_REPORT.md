@@ -2,13 +2,13 @@
 
 ## Trạng thái hiện tại
 
-Chưa có lỗi nào được đóng trong chu kỳ Flow mới. Tệp này chỉ ghi các vòng debug đã có bằng chứng đỏ -> xanh.
+Các lỗi local và artifact của C-001 đã được đóng bằng bằng chứng đỏ -> xanh. Live gate vẫn bị chặn bởi incident ChatGPT Sites; không được tính là hoàn thành.
 
 ## Vòng debug
 
 | Vòng | Lỗi | Trước sửa | Sau sửa | Trạng thái |
 | --- | --- | --- | --- | --- |
-| DBG-000 | Baseline QA | Test FAIL 0/2 | Chưa sửa trong giai đoạn assessment | OPEN |
+| DBG-000 | ERR-001/002 baseline QA | Test FAIL 0/2 | Product test PASS 4/4 + exact bundle chạy bằng Wrangler | DONE |
 | DBG-001 | ERR-006 Flow runner | `no such file or directory` | `flow recall` PASS, exit `0` | DONE |
 | DBG-002 | ERR-007 Flow harness ADR | CLI thiếu `--title` | 7/7 `decision add` PASS | DONE |
 | DBG-003 | ERR-008 migration config | `--migrations-dir` không tồn tại | Wrangler đọc `migrations_dir` và áp dụng 2/2 migration | DONE |
@@ -16,7 +16,8 @@ Chưa có lỗi nào được đóng trong chu kỳ Flow mới. Tệp này chỉ
 | DBG-005 | ERR-010 Drizzle meta | thiếu `_journal.json` | Sinh lại 2 migration + snapshots PASS | DONE |
 | DBG-006 | ERR-011 runtime flags | `nodejs_compat` lặp | Vượt config merge | DONE |
 | DBG-007 | ERR-012 runtime date | date không được hỗ trợ | Dev server + 4 local HTTP checks PASS | DONE |
-| DBG-008 | ERR-013 live runtime package | Live routes `500` | Artifact local đã sửa; chờ redeploy/live QA | OPEN |
+| DBG-008 | ERR-013 deployment artifact | Hai binding DB + thiếu migration `0001` | Một binding DB + đủ `0000`/`0001`; exact bundle QA PASS | DONE |
+| DBG-009 | ERR-014 Sites runtime incident | v4/v2/v1 đều platform `500` | Chờ OpenAI khắc phục và live QA lại | BLOCKED |
 
 ## Quy tắc ghi nhận
 
@@ -38,4 +39,6 @@ Một lỗi chỉ được chuyển sang `DONE` khi có đủ:
 - `DBG-005` (2026-07-13): tái tạo migration store từ thư mục trống thật; Drizzle sinh snapshots hợp lệ.
 - `DBG-006` (2026-07-13): loại cờ runtime bị lặp khỏi Wrangler config.
 - `DBG-007` (2026-07-13): khóa compatibility date theo runtime local; curl xác nhận health `200`, thiếu auth `401`, có auth `200`, OpenAPI 3.1 và docs HTML.
-- `DBG-008` (2026-07-13): phát hiện hai binding `DB` và migration source sai trong artifact v3; artifact sửa còn một binding, đóng gói `0000` + `0001`, lint/build/test 4/4 và fresh migration PASS. Chưa đóng cho đến khi live xanh.
+- `DBG-000` (2026-07-13): thay test skeleton bằng product tests, tách logic identity thuần và chạy build trước test; PASS 4/4. Exact production bundle khởi tạo được bằng Wrangler và trả đúng các route không phụ thuộc D1.
+- `DBG-008` (2026-07-13): đóng phần lỗi artifact bằng commit `0002eec`; live gate được tách sang DBG-009 sau phép thử rollback chứng minh cùng lỗi xuất hiện ở version 1 không có D1.
+- `DBG-009` (2026-07-13): ba version độc lập đều deployment `succeeded` nhưng production hostname trả cùng trang platform `500`; OpenAI Status có incident Sites đang điều tra. Version 4 đã được restore, vòng này giữ `BLOCKED` cho đến khi world-state live xanh.
